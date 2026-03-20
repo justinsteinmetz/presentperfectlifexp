@@ -43,6 +43,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .lobby-panel { background:var(--surface); border:1px solid var(--border); padding:28px 32px; min-width:260px; max-width:320px; text-align:left; }
 .lobby-panel h3 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:var(--accent); margin-bottom:6px; }
 .lobby-panel p { font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6; }
+.lobby-panel.solo { border-color:#2a3520; }
+.lobby-panel.solo h3 { color:var(--green); }
+.lobby-panel.host-panel { border-color:#2a2035; }
+.lobby-panel.host-panel h3 { color:var(--accent2); }
 
 .field-group { display:flex; flex-direction:column; gap:10px; }
 .txt-input { background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; padding:10px 14px; outline:none; transition:border-color .2s; width:100%; }
@@ -50,16 +54,27 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .txt-input::placeholder { color:var(--muted); }
 
 .btn { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; cursor:pointer; border:none; transition:all .15s; }
-.btn-lime { background:var(--accent); color:var(--bg); }
-.btn-lime:hover { background:#daff33; transform:translateY(-2px); box-shadow:0 6px 24px rgba(200,255,0,.3); }
+.btn-lime  { background:var(--accent); color:var(--bg); }
+.btn-lime:hover  { background:#daff33; transform:translateY(-2px); box-shadow:0 6px 24px rgba(200,255,0,.3); }
+.btn-green { background:var(--green); color:var(--bg); }
+.btn-green:hover { background:#33ffaa; transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,230,118,.3); }
+.btn-pink  { background:var(--accent2); color:#fff; }
+.btn-pink:hover  { background:#ff6b85; transform:translateY(-2px); box-shadow:0 6px 24px rgba(255,77,109,.3); }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:14px; padding:9px 20px; }
 .btn-ghost:hover { border-color:var(--muted); color:var(--text); }
-.btn-red { background:var(--accent2); color:#fff; }
-.btn-red:hover { background:#ff6b85; }
+.btn-red   { background:var(--accent2); color:#fff; }
+.btn-red:hover   { background:#ff6b85; }
+.btn-sm    { font-size:13px; padding:7px 18px; letter-spacing:2px; }
 
 .status-msg { margin-top:12px; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--muted); min-height:18px; }
-.status-msg.ok { color:var(--green); }
+.status-msg.ok  { color:var(--green); }
 .status-msg.err { color:var(--accent2); }
+
+/* PB badge */
+.pb-badge { display:none; margin-top:14px; background:rgba(0,230,118,.08); border:1px solid rgba(0,230,118,.3); padding:10px 14px; }
+.pb-badge.show { display:block; }
+.pb-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); margin-bottom:4px; }
+.pb-score { font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--green); letter-spacing:3px; }
 
 /* ── WAITING ── */
 #screen-waiting { align-items:center; justify-content:center; padding:40px 24px; text-align:center; }
@@ -77,13 +92,21 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .game-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20; flex-wrap:wrap; gap:8px; }
 .game-title { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--accent); letter-spacing:3px; }
 .player-name-badge { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--muted); }
+.player-name-badge.solo-mode { color:var(--green); }
+.player-name-badge.host-mode { color:var(--accent2); }
+
 .xp-badge { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); letter-spacing:2px; }
 .xp-badge span { font-size:11px; letter-spacing:3px; color:var(--muted); }
+
+.pb-header { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); display:none; }
+.pb-header.show { display:block; }
+.pb-header em { color:var(--green); font-style:normal; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; }
 
 .timer-wrap { background:var(--surface); border-bottom:1px solid var(--border); }
 .timer-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); padding:6px 20px 4px; text-align:right; }
 .timer-bar-outer { height:4px; background:var(--border); }
 .timer-bar-inner { height:4px; background:var(--accent2); transition:width 0.5s linear; }
+.timer-bar-inner.solo { background:var(--green); }
 
 .paused-banner { display:none; background:var(--accent2); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:4px; text-align:center; padding:10px; }
 .paused-banner.show { display:block; }
@@ -111,7 +134,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .exp-card.claimed::before { transform:scaleX(1); }
 
 .card-emoji { font-size:24px; margin-bottom:5px; display:block; }
-.card-verb { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
+.card-verb  { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
 .card-phrase { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
 .card-xp { position:absolute; top:10px; right:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--gold); }
 
@@ -121,7 +144,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .confirm-btns { display:flex; gap:6px; }
 .btn-confirm { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:2px; padding:6px 12px; cursor:pointer; border:none; }
 .btn-yes { background:var(--accent); color:var(--bg); }
-.btn-no { background:var(--border); color:var(--muted); }
+.btn-no  { background:var(--border); color:var(--muted); }
 
 .claimed-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:var(--accent); letter-spacing:1px; }
 .exp-card.claimed .claimed-tag { display:block; }
@@ -129,28 +152,52 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .xp-popup { position:fixed; font-family:'Bebas Neue',sans-serif; font-size:44px; color:var(--gold); pointer-events:none; z-index:999; animation:floatUp 1s ease-out forwards; text-shadow:0 0 20px rgba(255,215,0,.6); }
 @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.3)} }
 
-/* ── HOST LEADERBOARD SIDEBAR ── */
-.lb-sidebar { width:210px; background:var(--surface); border-left:1px solid var(--border); padding:14px; flex-shrink:0; overflow-y:auto; display:flex; flex-direction:column; }
-.lb-sidebar > h4 { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:3px; color:var(--accent); margin-bottom:10px; }
-.lb-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
-.lb-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
-.lb-xp { font-family:'Bebas Neue',sans-serif; font-size:17px; color:var(--gold); flex-shrink:0; }
-.lb-claims { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); margin-top:1px; }
-.lb-me { background:rgba(200,255,0,.05); }
+/* ── HOST FULL-SCREEN VIEW ── */
+.host-view { flex:1; display:none; flex-direction:column; padding:24px; gap:16px; overflow-y:auto; }
+.host-view.show { display:flex; }
+.host-view-header { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:var(--accent2); margin-bottom:4px; }
+.host-lb-full { flex:1; }
+.host-lb-row { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--card); border:1px solid var(--border); margin-bottom:8px; transition:background .4s; }
+.host-lb-row:first-child { border-color:var(--gold); background:rgba(255,215,0,.06); }
+.host-lb-row.flash { animation: lbFlash .6s ease-out; }
+@keyframes lbFlash { 0%{background:rgba(200,255,0,.18)} 100%{background:var(--card)} }
+.hlb-rank { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--muted); width:40px; flex-shrink:0; }
+.hlb-rank.first { color:var(--gold); }
+.hlb-name { font-size:16px; font-weight:600; flex:1; }
+.hlb-sentences { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
+.hlb-xp { font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--gold); flex-shrink:0; }
+.hlb-empty { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:2px; padding:20px 0; }
 
-.host-controls { margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:7px; }
-.host-controls h4 { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); }
+.host-ctrl-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding-top:16px; border-top:1px solid var(--border); }
+.host-ctrl-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); margin-right:4px; }
 
-/* ── STUDENT MINI LEADERBOARD ── */
+/* ── STUDENT MINI LB ── */
 .student-lb { background:var(--surface); border-top:1px solid var(--border); padding:8px 18px; display:none; flex-direction:row; gap:0; overflow-x:auto; flex-shrink:0; align-items:center; }
 .student-lb.show { display:flex; }
 .slb-item { display:flex; align-items:center; gap:5px; white-space:nowrap; padding:0 12px; border-right:1px solid var(--border); }
 .slb-item:first-child { padding-left:0; }
-.slb-item:last-child { border-right:none; }
-.slb-pos { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--muted); }
+.slb-item:last-child  { border-right:none; }
+.slb-pos  { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--muted); }
 .slb-name { font-size:12px; font-weight:600; }
 .slb-name.me { color:var(--accent); }
-.slb-xp { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--gold); }
+.slb-xp   { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--gold); }
+
+/* ── SOLO PROGRESS PANEL ── */
+.solo-panel { width:210px; background:var(--surface); border-left:1px solid var(--border); padding:14px; flex-shrink:0; display:none; flex-direction:column; }
+.solo-panel.show { display:flex; }
+.solo-panel > h4 { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:3px; color:var(--green); margin-bottom:12px; }
+.solo-stat { padding:10px 0; border-bottom:1px solid var(--border); }
+.solo-stat-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); margin-bottom:4px; }
+.solo-stat-value { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--gold); letter-spacing:2px; }
+.solo-stat-value.green { color:var(--green); }
+.solo-stat-sub { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); margin-top:2px; }
+.solo-progress-wrap { margin-top:12px; }
+.solo-progress-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); margin-bottom:6px; }
+.solo-cat-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.solo-cat-emoji { font-size:14px; width:20px; }
+.solo-cat-bar-outer { flex:1; height:4px; background:var(--border); }
+.solo-cat-bar-inner { height:4px; background:var(--green); transition:width .3s; }
+.solo-cat-count { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); width:30px; text-align:right; flex-shrink:0; }
 
 /* ── RESULTS ── */
 #screen-results { align-items:center; justify-content:center; padding:40px 24px; background:radial-gradient(ellipse at 50% 20%, #1a2a0a 0%, var(--bg) 70%); }
@@ -158,14 +205,26 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .results-title { font-family:'Bebas Neue',sans-serif; font-size:60px; color:var(--accent); letter-spacing:6px; }
 .winner-banner { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:4px; color:var(--muted); margin:8px 0 28px; }
 
+.solo-result-card { background:var(--surface); border:1px solid var(--border); padding:28px 32px; margin:0 auto 28px; max-width:460px; }
+.solo-result-card.pb { border-color:var(--green); background:rgba(0,230,118,.05); }
+.src-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+.src-row:last-child { border-bottom:none; }
+.src-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); }
+.src-val   { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--gold); letter-spacing:2px; }
+.src-val.green { color:var(--green); }
+.src-val.red   { color:var(--accent2); }
+.pb-flash { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:4px; color:var(--green); margin-bottom:12px; display:none; }
+.pb-flash.show { display:block; animation:pbPulse 1s ease-out; }
+@keyframes pbPulse { 0%{opacity:0;transform:scale(.8)} 50%{opacity:1;transform:scale(1.05)} 100%{transform:scale(1)} }
+
 .podium { display:flex; justify-content:center; align-items:flex-end; gap:10px; margin:20px 0; }
 .podium-slot { flex:1; max-width:200px; background:var(--surface); border:1px solid var(--border); padding:18px 12px; display:flex; flex-direction:column; align-items:center; }
 .podium-slot.gold { border-color:var(--gold); background:rgba(255,215,0,.07); }
-.p-pos { font-family:'Bebas Neue',sans-serif; font-size:42px; line-height:1; }
+.p-pos  { font-family:'Bebas Neue',sans-serif; font-size:42px; line-height:1; }
 .podium-slot.gold .p-pos { color:var(--gold); }
 .podium-slot:not(.gold) .p-pos { color:var(--muted); }
 .p-name { font-weight:600; font-size:16px; margin:6px 0 3px; }
-.p-xp { font-family:'Space Mono',monospace; font-size:12px; color:var(--gold); }
+.p-xp   { font-family:'Space Mono',monospace; font-size:12px; color:var(--gold); }
 
 .sentences-section { margin-top:28px; text-align:left; }
 .sentences-section h3 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:var(--accent); margin-bottom:12px; }
@@ -177,7 +236,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .grammar-float { position:fixed; bottom:18px; right:18px; background:var(--surface); border:1px solid var(--accent); padding:14px 18px; max-width:260px; z-index:50; display:none; }
 .grammar-float h4 { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-bottom:8px; }
 .g-row { display:flex; gap:6px; margin-bottom:5px; align-items:baseline; }
-.g-sub { color:var(--muted); font-size:11px; width:54px; flex-shrink:0; }
+.g-sub  { color:var(--muted); font-size:11px; width:54px; flex-shrink:0; }
 .g-form { font-family:'Space Mono',monospace; font-size:11px; color:var(--text); }
 .g-form em { color:var(--accent); font-style:normal; }
 
@@ -195,10 +254,27 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 <div id="screen-lobby" class="screen active">
   <div style="margin-bottom:28px">
     <div class="logo">LIFE<br>XP</div>
-    <div class="logo-sub">PRESENT PERFECT · MULTIPLAYER</div>
+    <div class="logo-sub">PRESENT PERFECT</div>
     <div class="grammar-pill">have / has + past participle</div>
   </div>
   <div class="lobby-panels">
+
+    <!-- SOLO -->
+    <div class="lobby-panel solo">
+      <h3>SOLO</h3>
+      <p>Play alone. Beat the clock. Try to beat your personal best.</p>
+      <div class="field-group">
+        <input class="txt-input" id="solo-name" placeholder="Your name" maxlength="20">
+        <button class="btn btn-green" onclick="startSolo()">PLAY SOLO →</button>
+      </div>
+      <div class="pb-badge" id="pb-badge">
+        <div class="pb-label">PERSONAL BEST</div>
+        <div class="pb-score" id="pb-score">—</div>
+      </div>
+      <div class="status-msg" id="solo-status"></div>
+    </div>
+
+    <!-- JOIN -->
     <div class="lobby-panel">
       <h3>JOIN GAME</h3>
       <p>Enter the room code from the board and your name.</p>
@@ -210,15 +286,17 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       </div>
       <div class="status-msg" id="join-status"></div>
     </div>
-    <div class="lobby-panel">
+
+    <!-- HOST -->
+    <div class="lobby-panel host-panel">
       <h3>HOST GAME</h3>
-      <p>Create a room. Share the code. Play and control from this device.</p>
+      <p>Create a room and control the game. Students join — you watch, pause, and end.</p>
       <div class="field-group">
-        <input class="txt-input" id="host-name" placeholder="Your name (optional)" maxlength="20">
-        <button class="btn btn-lime" onclick="hostGame()">CREATE ROOM →</button>
+        <button class="btn btn-pink" onclick="hostGame()">CREATE ROOM →</button>
       </div>
       <div class="status-msg" id="host-status"></div>
     </div>
+
   </div>
 </div>
 
@@ -247,39 +325,101 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="game-header">
     <div class="game-title">LIFE XP</div>
     <div class="player-name-badge" id="player-badge">—</div>
-    <div class="xp-badge"><span>XP </span><span id="my-xp">0</span></div>
+    <div class="pb-header" id="pb-header">PB <em id="pb-header-val">—</em></div>
+    <div class="xp-badge" id="xp-badge-wrap"><span>XP </span><span id="my-xp">0</span></div>
   </div>
   <div class="timer-wrap">
     <div class="timer-label" id="timer-label">TIME REMAINING: 3:00</div>
     <div class="timer-bar-outer"><div class="timer-bar-inner" id="timer-bar" style="width:100%"></div></div>
   </div>
-  <div class="paused-banner" id="paused-banner">⏸ GAME PAUSED BY TEACHER</div>
+  <div class="paused-banner" id="paused-banner">⏸ GAME PAUSED</div>
+
   <div class="game-body">
+    <!-- Category sidebar — hidden in host mode -->
     <div class="cat-sidebar" id="cat-sidebar"></div>
-    <div class="cards-area">
+
+    <!-- Cards area — hidden in host mode -->
+    <div class="cards-area" id="cards-area">
       <div class="cat-heading" id="cat-heading">FOOD &amp; DRINK</div>
       <div class="cat-sub">CLICK a card → attempt the sentence aloud → reveal → confirm</div>
       <div class="cards-grid" id="cards-grid"></div>
     </div>
-    <div class="lb-sidebar" id="lb-sidebar" style="display:none">
-      <h4>LEADERBOARD</h4>
-      <div id="lb-rows"></div>
-      <div class="host-controls">
-        <h4>HOST CONTROLS</h4>
-        <button class="btn btn-ghost" id="btn-pause" onclick="hostTogglePause()">⏸ PAUSE</button>
-        <button class="btn btn-red" onclick="hostEndGame()">■ END GAME</button>
+
+    <!-- Host full-screen leaderboard view (pure host mode) -->
+    <div class="host-view" id="host-view">
+      <div>
+        <div class="host-view-header">LIVE LEADERBOARD</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted)" id="host-player-count">0 players</div>
+      </div>
+      <div class="host-lb-full" id="host-lb-full">
+        <div class="hlb-empty">Waiting for first claims...</div>
+      </div>
+      <div class="host-ctrl-bar">
+        <span class="host-ctrl-label">CONTROLS</span>
+        <button class="btn btn-ghost btn-sm" id="btn-pause-full" onclick="hostTogglePause()">⏸ PAUSE</button>
+        <button class="btn btn-red btn-sm" onclick="hostEndGame()">■ END GAME</button>
+      </div>
+    </div>
+
+    <!-- Solo progress panel -->
+    <div class="solo-panel" id="solo-panel">
+      <h4>MY PROGRESS</h4>
+      <div class="solo-stat">
+        <div class="solo-stat-label">TOTAL XP</div>
+        <div class="solo-stat-value" id="sp-xp">0</div>
+        <div class="solo-stat-sub" id="sp-xp-max"></div>
+      </div>
+      <div class="solo-stat">
+        <div class="solo-stat-label">SENTENCES</div>
+        <div class="solo-stat-value green" id="sp-count">0</div>
+        <div class="solo-stat-sub" id="sp-count-max"></div>
+      </div>
+      <div class="solo-progress-wrap">
+        <div class="solo-progress-label">BY CATEGORY</div>
+        <div id="sp-cats"></div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost btn-sm" style="width:100%" onclick="quitSolo()">✕ QUIT</button>
       </div>
     </div>
   </div>
+
+  <!-- Student mini LB strip -->
   <div class="student-lb" id="student-lb"></div>
 </div>
 
 <!-- RESULTS -->
 <div id="screen-results" class="screen">
   <div class="results-inner">
-    <div class="results-title">GAME OVER</div>
+    <div class="results-title" id="results-title">GAME OVER</div>
     <div class="winner-banner" id="winner-banner">—</div>
-    <div class="podium" id="podium"></div>
+
+    <div id="solo-result-wrap" style="display:none">
+      <div class="pb-flash" id="pb-flash">🏆 NEW PERSONAL BEST!</div>
+      <div class="solo-result-card" id="solo-result-card">
+        <div class="src-row">
+          <span class="src-label">TOTAL XP</span>
+          <span class="src-val" id="sr-xp">0</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">SENTENCES CLAIMED</span>
+          <span class="src-val green" id="sr-count">0</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">PERSONAL BEST</span>
+          <span class="src-val green" id="sr-pb">—</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">VS BEST</span>
+          <span class="src-val" id="sr-diff">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="multi-result-wrap">
+      <div class="podium" id="podium"></div>
+    </div>
+
     <div class="sentences-section">
       <h3>SENTENCES USED</h3>
       <div class="sentence-grid" id="sentence-grid"></div>
@@ -288,6 +428,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
 </div>
 
+<!-- Grammar float -->
 <div class="grammar-float" id="grammar-float">
   <h4>Grammar</h4>
   <div class="g-row"><span class="g-sub">I/You/We</span><span class="g-form"><em>have</em> + past participle</span></div>
@@ -296,55 +437,59 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 </div>
 
 <script>
-const ABLY_KEY = '5toTPA._mWevg:t5wRw5Kjwsmeqtdo3Lir4oPJ3M3PVN3ci_GJDchtRsA';
+const ABLY_KEY      = '5toTPA._mWevg:t5wRw5Kjwsmeqtdo3Lir4oPJ3M3PVN3ci_GJDchtRsA';
 const GAME_DURATION = 180;
 
 const CATEGORIES = [
   { id:'food', icon:'🍜', label:'Food & Drink', cards:[
-    { emoji:'🍕', verb:'eat',   phrase:'pizza for breakfast',         sentence:'I have eaten pizza for breakfast.',         xp:10 },
-    { emoji:'🌶️', verb:'try',   phrase:'really spicy food',           sentence:'I have tried really spicy food.',           xp:15 },
-    { emoji:'🍣', verb:'eat',   phrase:'sushi',                       sentence:'I have eaten sushi.',                       xp:10 },
-    { emoji:'🧇', verb:'make',  phrase:'pancakes',                    sentence:'I have made pancakes.',                     xp:10 },
-    { emoji:'🥑', verb:'eat',   phrase:'avocado',                     sentence:'I have eaten avocado.',                     xp:5  },
-    { emoji:'☕', verb:'drink', phrase:'coffee',                      sentence:'I have drunk coffee.',                      xp:10 },
+    { emoji:'🍕', verb:'eat',   phrase:'pizza for breakfast',          sentence:'I have eaten pizza for breakfast.',          xp:10 },
+    { emoji:'🌶️', verb:'try',   phrase:'really spicy food',            sentence:'I have tried really spicy food.',            xp:15 },
+    { emoji:'🍣', verb:'eat',   phrase:'sushi',                        sentence:'I have eaten sushi.',                        xp:10 },
+    { emoji:'🧇', verb:'make',  phrase:'pancakes',                     sentence:'I have made pancakes.',                      xp:10 },
+    { emoji:'🥑', verb:'eat',   phrase:'avocado',                      sentence:'I have eaten avocado.',                      xp:5  },
+    { emoji:'☕', verb:'drink', phrase:'coffee',                       sentence:'I have drunk coffee.',                       xp:10 },
   ]},
   { id:'travel', icon:'✈️', label:'Travel', cards:[
-    { emoji:'✈️', verb:'fly',   phrase:'on a plane',                  sentence:'I have flown on a plane.',                  xp:15 },
-    { emoji:'🌊', verb:'swim',  phrase:'in the sea',                  sentence:'I have swum in the sea.',                   xp:10 },
-    { emoji:'🏔️', verb:'climb', phrase:'a mountain',                  sentence:'I have climbed a mountain.',                xp:20 },
-    { emoji:'🚂', verb:'ride',  phrase:'a night train',               sentence:'I have ridden a night train.',              xp:15 },
-    { emoji:'🌍', verb:'visit', phrase:'three countries',             sentence:'I have visited three countries.',           xp:20 },
-    { emoji:'🏖️', verb:'sleep', phrase:'on a beach',                  sentence:'I have slept on a beach.',                  xp:20 },
+    { emoji:'✈️', verb:'fly',   phrase:'on a plane',                   sentence:'I have flown on a plane.',                   xp:15 },
+    { emoji:'🌊', verb:'swim',  phrase:'in the sea',                   sentence:'I have swum in the sea.',                    xp:10 },
+    { emoji:'🏔️', verb:'climb', phrase:'a mountain',                   sentence:'I have climbed a mountain.',                 xp:20 },
+    { emoji:'🚂', verb:'ride',  phrase:'a night train',                sentence:'I have ridden a night train.',               xp:15 },
+    { emoji:'🌍', verb:'visit', phrase:'three countries',              sentence:'I have visited three countries.',            xp:20 },
+    { emoji:'🏖️', verb:'sleep', phrase:'on a beach',                   sentence:'I have slept on a beach.',                   xp:20 },
   ]},
   { id:'sports', icon:'⚽', label:'Sports', cards:[
-    { emoji:'⚽', verb:'score', phrase:'a goal',                      sentence:'I have scored a goal.',                     xp:15 },
-    { emoji:'🤸', verb:'do',    phrase:'a cartwheel',                 sentence:'I have done a cartwheel.',                  xp:10 },
-    { emoji:'🏊', verb:'swim',  phrase:'50 metres',                   sentence:'I have swum 50 metres.',                    xp:15 },
-    { emoji:'🛹', verb:'ride',  phrase:'a skateboard',                sentence:'I have ridden a skateboard.',               xp:15 },
-    { emoji:'🥋', verb:'do',    phrase:'a martial art',               sentence:'I have done a martial art.',                xp:20 },
-    { emoji:'🎿', verb:'ski',   phrase:'down a slope',                sentence:'I have skied down a slope.',                xp:15 },
+    { emoji:'⚽', verb:'score', phrase:'a goal',                       sentence:'I have scored a goal.',                      xp:15 },
+    { emoji:'🤸', verb:'do',    phrase:'a cartwheel',                  sentence:'I have done a cartwheel.',                   xp:10 },
+    { emoji:'🏊', verb:'swim',  phrase:'50 metres',                    sentence:'I have swum 50 metres.',                     xp:15 },
+    { emoji:'🛹', verb:'ride',  phrase:'a skateboard',                 sentence:'I have ridden a skateboard.',                xp:15 },
+    { emoji:'🥋', verb:'do',    phrase:'a martial art',                sentence:'I have done a martial art.',                 xp:20 },
+    { emoji:'🎿', verb:'ski',   phrase:'down a slope',                 sentence:'I have skied down a slope.',                 xp:15 },
   ]},
   { id:'culture', icon:'🎬', label:'Culture', cards:[
-    { emoji:'🎵', verb:'sing',    phrase:'in front of people',        sentence:'I have sung in front of people.',           xp:20 },
-    { emoji:'📚', verb:'read',    phrase:'a whole book in English',   sentence:'I have read a whole book in English.',      xp:25 },
-    { emoji:'🎬', verb:'see',     phrase:'a film in another language',sentence:'I have seen a film in another language.',   xp:15 },
-    { emoji:'🎨', verb:'paint',   phrase:'a picture',                 sentence:'I have painted a picture.',                 xp:10 },
-    { emoji:'🎭', verb:'perform', phrase:'on stage',                  sentence:'I have performed on stage.',                xp:25 },
-    { emoji:'📺', verb:'watch',   phrase:'a series all night',        sentence:'I have watched a series all night.',        xp:15 },
+    { emoji:'🎵', verb:'sing',    phrase:'in front of people',         sentence:'I have sung in front of people.',            xp:20 },
+    { emoji:'📚', verb:'read',    phrase:'a whole book in English',    sentence:'I have read a whole book in English.',       xp:25 },
+    { emoji:'🎬', verb:'see',     phrase:'a film in another language', sentence:'I have seen a film in another language.',    xp:15 },
+    { emoji:'🎨', verb:'paint',   phrase:'a picture',                  sentence:'I have painted a picture.',                  xp:10 },
+    { emoji:'🎭', verb:'perform', phrase:'on stage',                   sentence:'I have performed on stage.',                 xp:25 },
+    { emoji:'📺', verb:'watch',   phrase:'a series all night',         sentence:'I have watched a series all night.',         xp:15 },
   ]},
   { id:'wild', icon:'🐉', label:'Wild Cards', cards:[
-    { emoji:'🐍', verb:'hold',  phrase:'a snake',                     sentence:'I have held a snake.',                      xp:30 },
-    { emoji:'💀', verb:'break', phrase:'a bone',                      sentence:'I have broken a bone.',                     xp:25 },
-    { emoji:'🚒', verb:'ride',  phrase:'a fire engine',               sentence:'I have ridden a fire engine.',              xp:40 },
-    { emoji:'👻', verb:'see',   phrase:'something inexplicable',      sentence:'I have seen something inexplicable.',       xp:35 },
-    { emoji:'💸', verb:'lose',  phrase:'money',                       sentence:'I have lost money.',                        xp:15 },
-    { emoji:'🌋', verb:'stand', phrase:'next to a volcano',           sentence:'I have stood next to a volcano.',           xp:30 },
+    { emoji:'🐍', verb:'hold',  phrase:'a snake',                      sentence:'I have held a snake.',                       xp:30 },
+    { emoji:'💀', verb:'break', phrase:'a bone',                       sentence:'I have broken a bone.',                      xp:25 },
+    { emoji:'🚒', verb:'ride',  phrase:'a fire engine',                sentence:'I have ridden a fire engine.',               xp:40 },
+    { emoji:'👻', verb:'see',   phrase:'something inexplicable',       sentence:'I have seen something inexplicable.',        xp:35 },
+    { emoji:'💸', verb:'lose',  phrase:'money',                        sentence:'I have lost money.',                         xp:15 },
+    { emoji:'🌋', verb:'stand', phrase:'next to a volcano',            sentence:'I have stood next to a volcano.',            xp:30 },
   ]},
 ];
 
+const MAX_XP        = CATEGORIES.reduce((t, c) => t + c.cards.reduce((s, card) => s + card.xp, 0), 0);
+const MAX_SENTENCES = CATEGORIES.reduce((t, c) => t + c.cards.length, 0);
+
 // ── STATE ──
 let ably, channel;
-let isHost    = false;
+let isSolo    = false;
+let isHost    = false;   // pure host — no gameplay
 let roomCode  = '';
 let myName    = '';
 let myXP      = 0;
@@ -353,16 +498,14 @@ let mySentences = [];
 let activeCat = 0;
 let pendingCard = null;
 
-// Timer — host owns endTime (absolute ms), broadcasts it
 let timerInterval = null;
-let endTime   = 0;
-let paused    = false;
-let pausedAt  = 0;   // ms when pause began
+let endTime    = 0;
+let paused     = false;
+let pausedAt   = 0;
 let gameActive = false;
 
-// Leaderboard — host is source of truth
-let leaderboard = {};  // name → { xp, sentences[] }
-let players = [];      // student names only (host tracked separately)
+let leaderboard = {};
+let players     = [];
 
 // ── HELPERS ──
 function $(id){ return document.getElementById(id); }
@@ -372,7 +515,7 @@ function showScreen(id){
 }
 function setStatus(el, msg, cls=''){
   el.textContent = msg;
-  el.className = 'status-msg' + (cls ? ' ' + cls : '');
+  el.className   = 'status-msg' + (cls ? ' ' + cls : '');
 }
 function showConnecting(msg){
   $('connecting').style.display = 'flex';
@@ -388,6 +531,46 @@ function timeRemaining(){
   return Math.max(0, Math.round((endTime - Date.now()) / 1000));
 }
 
+// ── PERSONAL BEST — keyed per player name ──
+function pbKey(name){ return 'lifexp_pb_' + name.toLowerCase().replace(/\s+/g,'_'); }
+function getPB(name){ try { return parseInt(localStorage.getItem(pbKey(name))) || 0; } catch(e){ return 0; } }
+function setPB(name, val){ try { localStorage.setItem(pbKey(name), val); } catch(e){} }
+
+// Update PB badge live as name is typed
+$('solo-name').addEventListener('input', () => {
+  const name = $('solo-name').value.trim();
+  const pb   = name ? getPB(name) : 0;
+  if(pb > 0){
+    $('pb-badge').classList.add('show');
+    $('pb-score').textContent = pb + ' XP';
+  } else {
+    $('pb-badge').classList.remove('show');
+  }
+});
+
+// ── SOLO ──
+function startSolo(){
+  const name = $('solo-name').value.trim();
+  if(!name){ setStatus($('solo-status'), 'Enter your name', 'err'); return; }
+  isSolo    = true;
+  isHost    = false;
+  myName    = name;
+  myXP      = 0;
+  myClaimed = new Set();
+  mySentences = [];
+  endTime    = Date.now() + GAME_DURATION * 1000;
+  paused     = false;
+  gameActive = true;
+  beginGame();
+}
+
+function quitSolo(){
+  clearInterval(timerInterval);
+  gameActive = false;
+  isSolo     = false;
+  location.reload();
+}
+
 // ── ABLY ──
 async function initAbly(clientId){
   ably = new Ably.Realtime({ key: ABLY_KEY, clientId });
@@ -397,12 +580,12 @@ async function initAbly(clientId){
   });
 }
 
-// ── HOST ──
+// ── HOST (pure — no gameplay) ──
 async function hostGame(){
-  const nameVal = $('host-name').value.trim();
-  myName   = nameVal || 'Teacher';
-  roomCode = genCode();
   isHost   = true;
+  isSolo   = false;
+  myName   = '';
+  roomCode = genCode();
   showConnecting('CREATING ROOM...');
   try {
     await initAbly('host-' + roomCode);
@@ -410,8 +593,7 @@ async function hostGame(){
     channel.subscribe(handleMessage);
     hideConnecting();
     leaderboard = {};
-    leaderboard[myName] = { xp:0, sentences:[] };
-    players = [];
+    players     = [];
     showWaitingRoom();
     setStatus($('host-status'), 'Room ready: ' + roomCode, 'ok');
   } catch(e){
@@ -421,28 +603,23 @@ async function hostGame(){
 }
 
 function showWaitingRoom(){
-  $('room-code-display').textContent = roomCode;
-  $('waiting-title').textContent     = isHost ? 'WAITING FOR PLAYERS' : 'JOINED — WAITING TO START...';
-  $('host-start-wrap').style.display = isHost ? 'block' : 'none';
+  $('room-code-display').textContent  = roomCode;
+  $('waiting-title').textContent      = isHost ? 'WAITING FOR PLAYERS' : 'JOINED — WAITING TO START...';
+  $('host-start-wrap').style.display  = isHost ? 'block' : 'none';
   $('student-wait-msg').style.display = isHost ? 'none' : 'block';
   updateRoster();
   showScreen('screen-waiting');
 }
 
 function updateRoster(){
-  const allNames = isHost ? [myName, ...players] : players;
-  $('roster-list').innerHTML = allNames.length
-    ? allNames.map(p =>
-        `<div class="roster-item">
-          <div class="roster-dot"></div>
-          ${p}${p === myName ? ' <span style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--muted)">(you)</span>' : ''}
-        </div>`).join('')
+  $('roster-list').innerHTML = players.length
+    ? players.map(p =>
+        `<div class="roster-item"><div class="roster-dot"></div>${p}</div>`).join('')
     : '<div style="color:var(--muted);font-size:13px;padding:8px 0">No players yet</div>';
-
   const btn = $('btn-start');
   if(btn){
     const ok = players.length >= 1;
-    btn.disabled    = !ok;
+    btn.disabled      = !ok;
     btn.style.opacity = ok ? '1' : '0.5';
   }
 }
@@ -452,10 +629,7 @@ function hostStartGame(){
   const et = Date.now() + GAME_DURATION * 1000;
   endTime    = et;
   gameActive = true;
-  channel.publish('game-start', {
-    endTime: et,
-    players: [myName, ...players]
-  });
+  channel.publish('game-start', { endTime: et, players: [...players] });
   beginGame();
 }
 
@@ -465,12 +639,11 @@ async function joinGame(){
   const name = $('join-name').value.trim();
   if(!code){ setStatus($('join-status'), 'Enter a room code', 'err'); return; }
   if(!name){ setStatus($('join-status'), 'Enter your name',   'err'); return; }
-
   showConnecting('JOINING...');
   roomCode = code;
   myName   = name;
   isHost   = false;
-
+  isSolo   = false;
   try {
     await initAbly(name + '-' + Date.now());
     channel = ably.channels.get('lifexp-' + roomCode);
@@ -489,29 +662,23 @@ function handleMessage(msg){
   const ev   = msg.name;
   const data = msg.data;
 
-  // HOST receives these events only
   if(isHost){
     if(ev === 'player-join'){
-      const allNames = [myName, ...players];
-      if(allNames.includes(data.name)){
+      if(players.includes(data.name)){
         channel.publish('name-rejected', { name: data.name });
         return;
       }
       players.push(data.name);
       if(!leaderboard[data.name]) leaderboard[data.name] = { xp:0, sentences:[] };
       updateRoster();
-      // Reply with full room state so late joiners can sync
+      // Update player count in host view if game already running
+      if(gameActive) updateHostPlayerCount();
       channel.publish('room-state', {
-        players:    [myName, ...players],
-        roomCode,
-        gameActive,
-        endTime,
-        paused,
-        pausedAt,
+        players: [...players], roomCode,
+        gameActive, endTime, paused, pausedAt,
         leaderboard: buildLBArray()
       });
     }
-
     if(ev === 'xp-update'){
       const { name, xp, sentence, cardId } = data;
       if(!leaderboard[name]) leaderboard[name] = { xp:0, sentences:[] };
@@ -519,62 +686,42 @@ function handleMessage(msg){
       if(sentence && !leaderboard[name].sentences.find(s => s.id === cardId)){
         leaderboard[name].sentences.push({ id: cardId, sentence });
       }
-      updateHostLB();
+      updateHostFullLB(name);
       channel.publish('leaderboard-update', { lb: buildLBArray() });
     }
-
-    return; // host does not handle its own control events
+    return; // host never processes its own control events
   }
 
-  // STUDENTS receive these events
+  // Student events
   if(ev === 'name-rejected' && data.name === myName){
     ably.close();
     showScreen('screen-lobby');
     setStatus($('join-status'), 'Name taken — choose another', 'err');
     return;
   }
-
   if(ev === 'room-state'){
     players = data.players || [];
     updateRoster();
     if(data.gameActive && !gameActive){
-      // Late joiner: drop into running game
-      gameActive = true;
-      endTime    = data.endTime;
-      paused     = data.paused;
-      pausedAt   = data.pausedAt || 0;
+      gameActive = true; endTime = data.endTime;
+      paused = data.paused; pausedAt = data.pausedAt || 0;
       beginGame();
       if(data.leaderboard) renderStudentLB(data.leaderboard);
     }
   }
-
   if(ev === 'game-start'){
-    gameActive = true;
-    endTime    = data.endTime;
-    players    = data.players || players;
-    paused     = false;
+    gameActive = true; endTime = data.endTime;
+    players = data.players || players; paused = false;
     beginGame();
   }
-
-  if(ev === 'timer-tick'){
-    endTime  = data.endTime;
-    paused   = data.paused;
-    pausedAt = data.pausedAt || 0;
-    updateTimerDisplay();
-    $('paused-banner').classList.toggle('show', paused);
-  }
-
   if(ev === 'game-pause'){
-    paused   = data.paused;
-    pausedAt = data.pausedAt || 0;
+    paused = data.paused; pausedAt = data.pausedAt || 0;
     if(!paused && data.endTime) endTime = data.endTime;
     $('paused-banner').classList.toggle('show', paused);
   }
-
   if(ev === 'leaderboard-update'){
     renderStudentLB(data.lb);
   }
-
   if(ev === 'game-end'){
     clearInterval(timerInterval);
     gameActive = false;
@@ -586,28 +733,65 @@ function handleMessage(msg){
 function beginGame(){
   showScreen('screen-game');
   $('grammar-float').style.display = 'block';
-  $('player-badge').textContent    = myName.toUpperCase();
-  buildCatSidebar();
-  switchCategory(0);
-  updateTimerDisplay();
 
   if(isHost){
-    $('lb-sidebar').style.display = 'flex';
-    updateHostLB();
+    // Pure host view: hide player elements, show full-screen LB
+    $('player-badge').textContent = 'HOST';
+    $('player-badge').classList.add('host-mode');
+    $('xp-badge-wrap').style.display  = 'none';
+    $('cat-sidebar').style.display    = 'none';
+    $('cards-area').style.display     = 'none';
+    $('grammar-float').style.display  = 'none'; // host doesn't need grammar panel
+    $('host-view').classList.add('show');
+    updateHostPlayerCount();
+    updateHostFullLB();
     startHostTimer();
+
+  } else if(isSolo){
+    $('player-badge').textContent = myName.toUpperCase();
+    $('player-badge').classList.add('solo-mode');
+    $('timer-bar').classList.add('solo');
+    const pb = getPB(myName);
+    if(pb > 0){
+      $('pb-header').classList.add('show');
+      $('pb-header-val').textContent = pb + ' XP';
+    }
+    $('solo-panel').classList.add('show');
+    buildCatSidebar();
+    switchCategory(0);
+    buildSoloCatProgress();
+    updateTimerDisplay();
+    startSoloTimer();
+
   } else {
+    // Student
+    $('player-badge').textContent = myName.toUpperCase();
     $('student-lb').classList.add('show');
+    buildCatSidebar();
+    switchCategory(0);
+    updateTimerDisplay();
     startStudentTimer();
   }
 }
 
-// ── TIMER ──
+// ── TIMERS ──
+function startSoloTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    updateTimerDisplay();
+    if(timeRemaining() <= 0){
+      clearInterval(timerInterval);
+      gameActive = false;
+      showSoloResults();
+    }
+  }, 500);
+}
+
 function startHostTimer(){
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     if(paused) return;
     updateTimerDisplay();
-    channel.publish('timer-tick', { endTime, paused, pausedAt });
     if(timeRemaining() <= 0){
       clearInterval(timerInterval);
       hostEndGame();
@@ -616,7 +800,6 @@ function startHostTimer(){
 }
 
 function startStudentTimer(){
-  // Renders locally from endTime — immune to network jitter
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
     if(!paused){
@@ -630,24 +813,22 @@ function updateTimerDisplay(){
   const rem = timeRemaining();
   const m   = Math.floor(rem / 60);
   const s   = String(rem % 60).padStart(2, '0');
-  $('timer-label').textContent      = `TIME REMAINING: ${m}:${s}`;
-  $('timer-bar').style.width        = (rem / GAME_DURATION * 100) + '%';
+  $('timer-label').textContent = `TIME REMAINING: ${m}:${s}`;
+  $('timer-bar').style.width   = (rem / GAME_DURATION * 100) + '%';
 }
 
 function hostTogglePause(){
   paused = !paused;
-  if(paused){
-    pausedAt = Date.now();
-  } else {
-    endTime += Date.now() - pausedAt; // extend by pause duration
-    pausedAt = 0;
-  }
-  $('btn-pause').textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+  if(paused){ pausedAt = Date.now(); }
+  else { endTime += Date.now() - pausedAt; pausedAt = 0; }
+  const label = paused ? '▶ RESUME' : '⏸ PAUSE';
+  $('btn-pause-full').textContent = label;
   $('paused-banner').classList.toggle('show', paused);
   channel.publish('game-pause', { paused, pausedAt, endTime });
 }
 
 function hostEndGame(){
+  if(!confirm('End the game now? This cannot be undone.')) return;
   clearInterval(timerInterval);
   gameActive = false;
   const lb = buildLBArray();
@@ -657,41 +838,77 @@ function hostEndGame(){
 
 // ── LEADERBOARD ──
 function buildLBArray(){
-  // Sync host's own live XP before building
-  if(leaderboard[myName]) leaderboard[myName].xp = myXP;
   return Object.entries(leaderboard)
     .map(([name, d]) => ({ name, xp: d.xp, sentences: d.sentences }))
     .sort((a, b) => b.xp - a.xp);
 }
 
-function updateHostLB(){
-  if(leaderboard[myName]) leaderboard[myName].xp = myXP;
+function updateHostPlayerCount(){
+  $('host-player-count').textContent = players.length + ' player' + (players.length !== 1 ? 's' : '') + ' connected';
+}
+
+let lastUpdatedName = null;
+
+function updateHostFullLB(updatedName){
+  if(updatedName) lastUpdatedName = updatedName;
   const sorted = buildLBArray();
-  $('lb-rows').innerHTML = sorted.map(p =>
-    `<div class="lb-row ${p.name === myName ? 'lb-me' : ''}">
+  if(!sorted.length){
+    $('host-lb-full').innerHTML = '<div class="hlb-empty">Waiting for first claims...</div>';
+    return;
+  }
+  $('host-lb-full').innerHTML = sorted.map((p, i) =>
+    `<div class="host-lb-row ${p.name === lastUpdatedName ? 'flash' : ''}" id="hlb-${i}">
+      <div class="hlb-rank ${i===0?'first':''}">${i+1}</div>
       <div>
-        <div class="lb-name">${p.name}${p.name === myName ? ' ★' : ''}</div>
-        <div class="lb-claims">${p.sentences.length} sentence${p.sentences.length !== 1 ? 's' : ''}</div>
+        <div class="hlb-name">${p.name}</div>
+        <div class="hlb-sentences">${p.sentences.length} sentence${p.sentences.length!==1?'s':''}</div>
       </div>
-      <div class="lb-xp">${p.xp}</div>
+      <div class="hlb-xp">${p.xp} XP</div>
     </div>`
-  ).join('') || '<div style="color:var(--muted);font-size:12px;padding:8px 0">No data yet</div>';
+  ).join('');
+  lastUpdatedName = null;
 }
 
 function renderStudentLB(lb){
   $('student-lb').innerHTML = lb.map((p, i) =>
     `<div class="slb-item">
-      <span class="slb-pos">${i + 1}.</span>
-      <span class="slb-name ${p.name === myName ? 'me' : ''}">${p.name}</span>
+      <span class="slb-pos">${i+1}.</span>
+      <span class="slb-name ${p.name===myName?'me':''}">${p.name}</span>
       <span class="slb-xp">${p.xp} XP</span>
     </div>`
   ).join('');
 }
 
+// ── SOLO PROGRESS PANEL ──
+function buildSoloCatProgress(){
+  $('sp-xp-max').textContent    = 'of ' + MAX_XP + ' max';
+  $('sp-count-max').textContent = 'of ' + MAX_SENTENCES + ' total';
+  $('sp-cats').innerHTML = CATEGORIES.map((cat, ci) =>
+    `<div class="solo-cat-row">
+      <span class="solo-cat-emoji">${cat.icon}</span>
+      <div class="solo-cat-bar-outer"><div class="solo-cat-bar-inner" id="scat-bar-${ci}" style="width:0%"></div></div>
+      <span class="solo-cat-count" id="scat-count-${ci}">0/${cat.cards.length}</span>
+    </div>`
+  ).join('');
+}
+
+function updateSoloPanel(){
+  $('sp-xp').textContent    = myXP;
+  $('sp-count').textContent = mySentences.length;
+  $('my-xp').textContent    = myXP;
+  CATEGORIES.forEach((cat, ci) => {
+    const claimed = cat.cards.filter((_, ki) => myClaimed.has(cardId(ci, ki))).length;
+    const bar = $('scat-bar-' + ci);
+    const cnt = $('scat-count-' + ci);
+    if(bar) bar.style.width   = Math.round(claimed / cat.cards.length * 100) + '%';
+    if(cnt) cnt.textContent   = `${claimed}/${cat.cards.length}`;
+  });
+}
+
 // ── CATEGORIES ──
 function buildCatSidebar(){
   $('cat-sidebar').innerHTML = CATEGORIES.map((c, i) =>
-    `<button class="cat-btn ${i === 0 ? 'active' : ''}" onclick="switchCategory(${i})">
+    `<button class="cat-btn ${i===0?'active':''}" onclick="switchCategory(${i})">
       <span class="ci">${c.icon}</span>${c.label}
     </button>`
   ).join('');
@@ -699,7 +916,7 @@ function buildCatSidebar(){
 
 function switchCategory(i){
   activeCat = i;
-  document.querySelectorAll('.cat-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  document.querySelectorAll('.cat-btn').forEach((b, j) => b.classList.toggle('active', i===j));
   $('cat-heading').textContent = CATEGORIES[i].label.toUpperCase();
   renderCards();
 }
@@ -713,7 +930,7 @@ function renderCards(){
     const id      = cardId(activeCat, ki);
     const claimed = myClaimed.has(id);
     const pending = pendingCard === id;
-    return `<div class="exp-card ${claimed ? 'claimed' : pending ? 'pending' : ''}"
+    return `<div class="exp-card ${claimed?'claimed':pending?'pending':''}"
                  id="card-${id}" onclick="cardClick(${activeCat},${ki})">
       <span class="card-emoji">${card.emoji}</span>
       <div class="card-verb">have ${card.verb}</div>
@@ -732,7 +949,8 @@ function renderCards(){
 }
 
 function cardClick(ci, ki){
-  if(paused || !gameActive) return;
+  if(!gameActive || (isHost)) return;
+  if(!isSolo && paused) return;
   const id = cardId(ci, ki);
   if(myClaimed.has(id)) return;
   if(pendingCard === id) return;
@@ -747,7 +965,8 @@ function cardClick(ci, ki){
 
 function confirmClaim(e, ci, ki, confirmed){
   e.stopPropagation();
-  if(paused || !gameActive) return;
+  if(!gameActive || isHost) return;
+  if(!isSolo && paused) return;
   const id   = cardId(ci, ki);
   const card = CATEGORIES[ci].cards[ki];
   const el   = document.getElementById('card-' + id);
@@ -765,13 +984,8 @@ function confirmClaim(e, ci, ki, confirmed){
   if(el){ el.classList.remove('pending'); el.classList.add('claimed'); }
   showXPPop(el, card.xp);
 
-  if(isHost){
-    // Host updates own entry directly
-    if(!leaderboard[myName]) leaderboard[myName] = { xp:0, sentences:[] };
-    leaderboard[myName].xp = myXP;
-    leaderboard[myName].sentences.push({ id, sentence: card.sentence });
-    updateHostLB();
-    channel.publish('leaderboard-update', { lb: buildLBArray() });
+  if(isSolo){
+    updateSoloPanel();
   } else {
     channel.publish('xp-update', {
       name: myName, xp: myXP, sentence: card.sentence, cardId: id
@@ -788,17 +1002,70 @@ function showXPPop(el, xp){
     pop.style.left = (r.left + r.width/2 - 40) + 'px';
     pop.style.top  = (r.top - 10) + 'px';
   } else {
-    pop.style.left = '50%';
-    pop.style.top  = '40%';
+    pop.style.left = '50%'; pop.style.top = '40%';
   }
   document.body.appendChild(pop);
   setTimeout(() => pop.remove(), 1000);
 }
 
-// ── RESULTS ──
-function showResults(lb){
+// ── SOLO RESULTS ──
+function showSoloResults(){
   clearInterval(timerInterval);
   $('grammar-float').style.display = 'none';
+
+  const prevPB  = getPB(myName);
+  const isNewPB = myXP > prevPB;
+  if(isNewPB) setPB(myName, myXP);
+  const newPB  = isNewPB ? myXP : prevPB;
+  const diff   = myXP - prevPB;
+
+  $('results-title').textContent       = "TIME'S UP";
+  $('winner-banner').textContent       = myName.toUpperCase() + ' · SOLO RUN';
+  $('multi-result-wrap').style.display = 'none';
+  $('solo-result-wrap').style.display  = 'block';
+
+  $('sr-xp').textContent    = myXP + ' XP';
+  $('sr-count').textContent = mySentences.length;
+  $('sr-pb').textContent    = newPB + ' XP';
+
+  // vs-best logic: prevPB === 0 means no previous run — always positive regardless of score
+  if(prevPB === 0){
+    $('sr-diff').textContent = 'First run!';
+    $('sr-diff').className   = 'src-val green';
+  } else if(isNewPB){
+    $('sr-diff').textContent = '+' + diff + ' XP';
+    $('sr-diff').className   = 'src-val green';
+  } else if(diff === 0){
+    $('sr-diff').textContent = 'Matched your best';
+    $('sr-diff').className   = 'src-val';
+  } else {
+    $('sr-diff').textContent = diff + ' XP';  // diff is negative here
+    $('sr-diff').className   = 'src-val red';
+  }
+
+  if(isNewPB || prevPB === 0){
+    $('solo-result-card').classList.add('pb');
+    $('pb-flash').classList.add('show');
+  }
+
+  $('sentence-grid').innerHTML = mySentences.length
+    ? mySentences.map(s =>
+        `<div class="s-item">
+          <div class="s-name">${myName}</div>
+          <div class="s-text">${s.sentence}</div>
+        </div>`).join('')
+    : '<div class="s-item" style="grid-column:1/-1">No sentences collected.</div>';
+
+  showScreen('screen-results');
+}
+
+// ── MULTIPLAYER RESULTS ──
+function showResults(lb){
+  clearInterval(timerInterval);
+  $('grammar-float').style.display     = 'none';
+  $('results-title').textContent       = 'GAME OVER';
+  $('solo-result-wrap').style.display  = 'none';
+  $('multi-result-wrap').style.display = 'block';
 
   if(!lb || !lb.length){
     $('winner-banner').textContent = 'NO DATA';
@@ -813,8 +1080,8 @@ function showResults(lb){
     ? "IT'S A DRAW!"
     : `🏆 WINNER: ${lb[0].name.toUpperCase()}`;
 
-  $('podium').innerHTML = lb.slice(0, 3).map((p, i) =>
-    `<div class="podium-slot ${i === 0 ? 'gold' : ''}">
+  $('podium').innerHTML = lb.slice(0,3).map((p, i) =>
+    `<div class="podium-slot ${i===0?'gold':''}">
       <div class="p-pos">${['1ST','2ND','3RD'][i]}</div>
       <div class="p-name">${p.name}</div>
       <div class="p-xp">${p.xp} XP</div>
