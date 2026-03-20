@@ -138,16 +138,55 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .card-phrase { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
 .card-xp { position:absolute; top:10px; right:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--gold); }
 
-.pending-overlay { display:none; margin-top:10px; }
-.exp-card.pending .pending-overlay { display:block; }
-.sentence-reveal { font-family:'Space Mono',monospace; font-size:11px; color:var(--gold); line-height:1.6; margin-bottom:8px; }
-.confirm-btns { display:flex; gap:6px; }
-.btn-confirm { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:2px; padding:6px 12px; cursor:pointer; border:none; }
-.btn-yes { background:var(--accent); color:var(--bg); }
-.btn-no  { background:var(--border); color:var(--muted); }
+/* ── CARD STATES ── */
+/* locked = used all attempts, no XP */
+.exp-card.locked { border-color:#3a2a2a; background:rgba(255,77,109,.05); cursor:default; opacity:0.7; }
+.exp-card.locked::before { transform:scaleX(1); background:var(--accent2); }
 
+/* second attempt indicator */
+.exp-card.attempt2 { border-color:#8a6a00; background:rgba(255,180,0,.05); }
+.exp-card.attempt2::before { transform:scaleX(1); background:#ffb300; }
+
+/* shake on wrong answer */
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.exp-card.shake { animation:shake .4s ease-out; }
+
+/* ── TYPING OVERLAY ── */
+.type-overlay { display:none; margin-top:10px; }
+.exp-card.pending .type-overlay { display:block; }
+.exp-card.attempt2 .type-overlay { display:block; }
+
+.attempt-badge { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin-bottom:6px; }
+.attempt-badge.second { color:#ffb300; }
+
+.sentence-input {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  color:var(--text); font-family:'Space Mono',monospace; font-size:11px;
+  padding:7px 10px; outline:none; resize:none; line-height:1.5;
+  transition:border-color .2s;
+}
+.sentence-input:focus { border-color:var(--gold); }
+.sentence-input.wrong  { border-color:var(--accent2); animation:inputShake .3s ease-out; }
+@keyframes inputShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+.input-feedback { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:1px; min-height:14px; margin-top:4px; }
+.input-feedback.err  { color:var(--accent2); }
+.input-feedback.hint { color:#ffb300; }
+
+.input-actions { display:flex; gap:6px; margin-top:7px; }
+.btn-submit { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:2px; padding:6px 14px; cursor:pointer; border:none; background:var(--accent); color:var(--bg); flex:1; }
+.btn-submit:hover { background:#daff33; }
+.btn-submit.amber { background:#ffb300; color:var(--bg); }
+.btn-cancel-input { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:2px; padding:6px 10px; cursor:pointer; border:none; background:var(--border); color:var(--muted); }
+
+/* claimed / locked tags */
 .claimed-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:var(--accent); letter-spacing:1px; }
 .exp-card.claimed .claimed-tag { display:block; }
+.locked-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:var(--accent2); letter-spacing:1px; line-height:1.5; }
+.exp-card.locked .locked-tag { display:block; }
+.xp-half-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:#ffb300; letter-spacing:1px; }
+.exp-card.claimed.half .xp-half-tag { display:block; }
+.exp-card.claimed.half .claimed-tag { display:none; }
 
 .xp-popup { position:fixed; font-family:'Bebas Neue',sans-serif; font-size:44px; color:var(--gold); pointer-events:none; z-index:999; animation:floatUp 1s ease-out forwards; text-shadow:0 0 20px rgba(255,215,0,.6); }
 @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.3)} }
@@ -341,7 +380,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <!-- Cards area — hidden in host mode -->
     <div class="cards-area" id="cards-area">
       <div class="cat-heading" id="cat-heading">FOOD &amp; DRINK</div>
-      <div class="cat-sub">CLICK a card → attempt the sentence aloud → reveal → confirm</div>
+      <div class="cat-sub">CLICK a card → type the sentence → SUBMIT · Full XP on 1st attempt, half on 2nd</div>
       <div class="cards-grid" id="cards-grid"></div>
     </div>
 
@@ -434,6 +473,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div class="g-row"><span class="g-sub">I/You/We</span><span class="g-form"><em>have</em> + past participle</span></div>
   <div class="g-row"><span class="g-sub">He/She/It</span><span class="g-form"><em>has</em> + past participle</span></div>
   <div class="g-row" style="margin-top:6px"><span class="g-sub">✗ NOT</span><span class="g-form" style="color:var(--accent2)">have <em>go</em> · has <em>eat</em></span></div>
+  <div class="g-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px"><span class="g-sub" style="width:auto;color:var(--muted);font-size:9px">1st try = full XP · 2nd try = ½ XP · miss both = locked</span></div>
 </div>
 
 <script>
@@ -558,6 +598,7 @@ function startSolo(){
   myXP      = 0;
   myClaimed = new Set();
   mySentences = [];
+  Object.keys(cardAttempts).forEach(k => delete cardAttempts[k]);
   endTime    = Date.now() + GAME_DURATION * 1000;
   paused     = false;
   gameActive = true;
@@ -924,73 +965,206 @@ function switchCategory(i){
 // ── CARDS ──
 function cardId(ci, ki){ return `${ci}-${ki}`; }
 
+// attempt tracking: id -> 0 (untouched), 1 (first attempt used), 2 (locked)
+const cardAttempts = {};
+
+function normalize(str){
+  return str.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g,' ');
+}
+
 function renderCards(){
   const cat = CATEGORIES[activeCat];
   $('cards-grid').innerHTML = cat.cards.map((card, ki) => {
-    const id      = cardId(activeCat, ki);
-    const claimed = myClaimed.has(id);
-    const pending = pendingCard === id;
-    return `<div class="exp-card ${claimed?'claimed':pending?'pending':''}"
-                 id="card-${id}" onclick="cardClick(${activeCat},${ki})">
+    const id       = cardId(activeCat, ki);
+    const claimed  = myClaimed.has(id);
+    const attempts = cardAttempts[id] || 0;
+    const locked   = attempts >= 2 && !claimed;
+    const attempt2 = attempts === 1 && !claimed;
+    const isHalf   = claimed && (cardAttempts[id] === 1); // claimed on 2nd attempt
+
+    let stateClass = '';
+    if(claimed)  stateClass = 'claimed' + (isHalf ? ' half' : '');
+    else if(locked)   stateClass = 'locked';
+    else if(attempt2) stateClass = 'attempt2';
+
+    // XP display: show half if on second attempt
+    const xpDisplay = attempt2 ? Math.floor(card.xp / 2) : card.xp;
+    const xpLabel   = attempt2 ? `+${xpDisplay} <span style="font-size:9px;color:#ffb300">½</span>` : `+${card.xp}`;
+
+    return `<div class="exp-card ${stateClass}" id="card-${id}" onclick="cardClick(${activeCat},${ki})">
       <span class="card-emoji">${card.emoji}</span>
       <div class="card-verb">have ${card.verb}</div>
       <div class="card-phrase">${card.phrase}</div>
-      <div class="card-xp">+${card.xp}</div>
-      <div class="pending-overlay">
-        <div class="sentence-reveal">${card.sentence}</div>
-        <div class="confirm-btns">
-          <button class="btn-confirm btn-yes" onclick="confirmClaim(event,${activeCat},${ki},true)">✓ I SAID IT</button>
-          <button class="btn-confirm btn-no"  onclick="confirmClaim(event,${activeCat},${ki},false)">✗ CANCEL</button>
+      <div class="card-xp">${xpLabel}</div>
+      <div class="type-overlay" id="overlay-${id}">
+        <div class="attempt-badge ${attempt2?'second':''}" id="badge-${id}">
+          ${attempt2 ? 'ATTEMPT 2 · HALF XP' : 'ATTEMPT 1 · FULL XP'}
+        </div>
+        <textarea class="sentence-input" id="input-${id}" rows="2"
+          placeholder="Write the sentence..." 
+          onkeydown="inputKeydown(event,'${id}',${activeCat},${ki})"
+        ></textarea>
+        <div class="input-feedback" id="feedback-${id}"></div>
+        <div class="input-actions">
+          <button class="btn-submit ${attempt2?'amber':''}" onclick="submitInput(event,'${id}',${activeCat},${ki})">
+            ${attempt2 ? 'SUBMIT (½ XP)' : 'SUBMIT'}
+          </button>
+          <button class="btn-cancel-input" onclick="cancelInput(event,'${id}')">✕</button>
         </div>
       </div>
-      <div class="claimed-tag">✓ CLAIMED</div>
+      <div class="claimed-tag">✓ CLAIMED · +${card.xp} XP</div>
+      <div class="xp-half-tag">✓ CLAIMED · +${Math.floor(card.xp/2)} XP (2nd attempt)</div>
+      <div class="locked-tag" id="locked-${id}">✗ LOCKED<br><span style="color:var(--muted);font-size:8px">${locked ? card.sentence : ''}</span></div>
     </div>`;
   }).join('');
 }
 
 function cardClick(ci, ki){
-  if(!gameActive || (isHost)) return;
+  if(!gameActive || isHost) return;
   if(!isSolo && paused) return;
-  const id = cardId(ci, ki);
+  const id       = cardId(ci, ki);
+  const attempts = cardAttempts[id] || 0;
   if(myClaimed.has(id)) return;
+  if(attempts >= 2) return; // locked
+  // If this card is already open, do nothing
   if(pendingCard === id) return;
-  if(pendingCard !== null){
-    const prev = document.getElementById('card-' + pendingCard);
-    if(prev) prev.classList.remove('pending');
-  }
+  // Close any other open card
+  if(pendingCard !== null) closeInput(pendingCard);
   pendingCard = id;
   const el = document.getElementById('card-' + id);
-  if(el){ el.classList.add('pending'); el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+  if(!el) return;
+  if(attempts === 0) el.classList.add('pending');
+  // attempt2 class already set via renderCards
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  // Focus the textarea after a brief delay for scroll
+  setTimeout(() => {
+    const inp = document.getElementById('input-' + id);
+    if(inp) inp.focus();
+  }, 150);
 }
 
-function confirmClaim(e, ci, ki, confirmed){
+function closeInput(id){
+  const el = document.getElementById('card-' + id);
+  if(!el) return;
+  const attempts = cardAttempts[id] || 0;
+  if(attempts === 0) el.classList.remove('pending');
+  const inp = document.getElementById('input-' + id);
+  if(inp){ inp.value = ''; inp.classList.remove('wrong'); }
+  const fb = document.getElementById('feedback-' + id);
+  if(fb) fb.textContent = '';
+  if(pendingCard === id) pendingCard = null;
+}
+
+function cancelInput(e, id){
+  e.stopPropagation();
+  closeInput(id);
+}
+
+function inputKeydown(e, id, ci, ki){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    submitInput(e, id, ci, ki);
+  }
+  if(e.key === 'Escape') closeInput(id);
+}
+
+function submitInput(e, id, ci, ki){
   e.stopPropagation();
   if(!gameActive || isHost) return;
   if(!isSolo && paused) return;
-  const id   = cardId(ci, ki);
+
+  const inp  = document.getElementById('input-' + id);
+  const fb   = document.getElementById('feedback-' + id);
   const card = CATEGORIES[ci].cards[ki];
   const el   = document.getElementById('card-' + id);
-  pendingCard = null;
+  if(!inp) return;
 
-  if(!confirmed){
-    if(el) el.classList.remove('pending');
+  const typed   = normalize(inp.value);
+  const correct = normalize(card.sentence);
+
+  if(!typed){
+    fb.textContent = 'Write the sentence first.';
+    fb.className   = 'input-feedback err';
     return;
   }
 
-  myClaimed.add(id);
-  myXP += card.xp;
-  mySentences.push({ id, sentence: card.sentence });
-  $('my-xp').textContent = myXP;
-  if(el){ el.classList.remove('pending'); el.classList.add('claimed'); }
-  showXPPop(el, card.xp);
+  const attempts = cardAttempts[id] || 0;
 
-  if(isSolo){
-    updateSoloPanel();
+  if(typed === correct){
+    // ── CORRECT ──
+    const earnedXP = attempts === 0 ? card.xp : Math.floor(card.xp / 2);
+    const isHalf   = attempts === 1;
+    myClaimed.add(id);
+    cardAttempts[id] = attempts; // freeze attempt count
+    myXP += earnedXP;
+    mySentences.push({ id, sentence: card.sentence, xp: earnedXP });
+    pendingCard = null;
+    // Re-render this card as claimed
+    el.className = 'exp-card claimed' + (isHalf ? ' half' : '');
+    el.onclick   = null;
+    const overlay = document.getElementById('overlay-' + id);
+    if(overlay) overlay.style.display = 'none';
+    el.querySelector('.claimed-tag') && !isHalf  ? null : null;
+    // Trigger re-render of just the tags via innerHTML patch
+    renderSingleCardTags(el, card, earnedXP, isHalf);
+    $('my-xp').textContent = myXP;
+    showXPPop(el, earnedXP);
+    if(isSolo) updateSoloPanel();
+    else channel.publish('xp-update', { name:myName, xp:myXP, sentence:card.sentence, cardId:id });
+
   } else {
-    channel.publish('xp-update', {
-      name: myName, xp: myXP, sentence: card.sentence, cardId: id
-    });
+    // ── WRONG ──
+    inp.classList.add('wrong');
+    setTimeout(() => inp.classList.remove('wrong'), 400);
+
+    if(attempts === 0){
+      // First attempt failed — move to attempt 2
+      cardAttempts[id] = 1;
+      fb.textContent   = 'Not quite. One more attempt — half XP.';
+      fb.className     = 'input-feedback hint';
+      // Update card state to attempt2
+      el.classList.remove('pending');
+      el.classList.add('attempt2');
+      // Update badge and button
+      const badge = document.getElementById('badge-' + id);
+      if(badge){ badge.textContent = 'ATTEMPT 2 · HALF XP'; badge.className = 'attempt-badge second'; }
+      const xpDiv = el.querySelector('.card-xp');
+      if(xpDiv) xpDiv.innerHTML = `+${Math.floor(card.xp/2)} <span style="font-size:9px;color:#ffb300">½</span>`;
+      const btn = el.querySelector('.btn-submit');
+      if(btn){ btn.textContent = 'SUBMIT (½ XP)'; btn.classList.add('amber'); }
+      inp.value = '';
+      inp.focus();
+    } else {
+      // Second attempt failed — lock the card
+      cardAttempts[id] = 2;
+      pendingCard = null;
+      el.className = 'exp-card locked';
+      el.onclick   = null;
+      const overlay = document.getElementById('overlay-' + id);
+      if(overlay) overlay.style.display = 'none';
+      const lockedTag = document.getElementById('locked-' + id);
+      if(lockedTag){
+        lockedTag.style.display = 'block';
+        lockedTag.innerHTML = `✗ LOCKED<br><span style="color:var(--muted);font-size:8px">${card.sentence}</span>`;
+      }
+    }
   }
+}
+
+function renderSingleCardTags(el, card, earnedXP, isHalf){
+  // Remove old tags and inject fresh ones
+  el.querySelectorAll('.claimed-tag,.xp-half-tag,.locked-tag,.type-overlay').forEach(n => n.remove());
+  const claimedTag = document.createElement('div');
+  if(isHalf){
+    claimedTag.className   = 'xp-half-tag';
+    claimedTag.style.display = 'block';
+    claimedTag.textContent = `✓ CLAIMED · +${earnedXP} XP (2nd attempt)`;
+  } else {
+    claimedTag.className   = 'claimed-tag';
+    claimedTag.style.display = 'block';
+    claimedTag.textContent = `✓ CLAIMED · +${earnedXP} XP`;
+  }
+  el.appendChild(claimedTag);
 }
 
 function showXPPop(el, xp){
