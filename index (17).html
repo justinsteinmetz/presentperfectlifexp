@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIFE XP</title>
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #0d0d0f;
+  --surface: #16161a;
+  --card: #1e1e24;
+  --border: #2a2a35;
+  --accent: #c8ff00;
+  --accent2: #ff4d6d;
+  --accent3: #00cfff;
+  --text: #e8e8f0;
+  --muted: #6e6e88;
+  --gold: #ffd700;
+  --green: #00e676;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── LOBBY ── */
+#screen-lobby {
+  align-items: center; justify-content: center; text-align: center;
+  padding: 40px 24px;
+  background: radial-gradient(ellipse at 50% 30%, #1a1a2e 0%, var(--bg) 70%);
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: clamp(72px,16vw,140px); color: var(--accent); letter-spacing: 8px; line-height: 0.9; animation: glow 3s ease-in-out infinite; }
+@keyframes glow { 0%,100%{text-shadow:0 0 40px rgba(200,255,0,.2)} 50%{text-shadow:0 0 80px rgba(200,255,0,.5),0 0 120px rgba(200,255,0,.2)} }
+.logo-sub { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 6px; color: var(--muted); margin-top: 6px; }
+.grammar-pill { display:inline-block; margin-top:16px; background:var(--accent2); color:#fff; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px; padding:6px 16px; }
+
+.lobby-panels { display:flex; gap:16px; margin-top:36px; flex-wrap:wrap; justify-content:center; }
+.lobby-panel { background:var(--surface); border:1px solid var(--border); padding:28px 32px; min-width:260px; max-width:320px; text-align:left; }
+.lobby-panel h3 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:var(--accent); margin-bottom:6px; }
+.lobby-panel p { font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6; }
+.lobby-panel.solo { border-color:#2a3520; }
+.lobby-panel.solo h3 { color:var(--green); }
+.lobby-panel.host-panel { border-color:#2a2035; }
+.lobby-panel.host-panel h3 { color:var(--accent2); }
+
+.field-group { display:flex; flex-direction:column; gap:10px; }
+.txt-input { background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; padding:10px 14px; outline:none; transition:border-color .2s; width:100%; }
+.txt-input:focus { border-color:var(--accent); }
+.txt-input::placeholder { color:var(--muted); }
+
+.btn { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px; padding:12px 32px; cursor:pointer; border:none; transition:all .15s; }
+.btn-lime  { background:var(--accent); color:var(--bg); }
+.btn-lime:hover  { background:#daff33; transform:translateY(-2px); box-shadow:0 6px 24px rgba(200,255,0,.3); }
+.btn-green { background:var(--green); color:var(--bg); }
+.btn-green:hover { background:#33ffaa; transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,230,118,.3); }
+.btn-pink  { background:var(--accent2); color:#fff; }
+.btn-pink:hover  { background:#ff6b85; transform:translateY(-2px); box-shadow:0 6px 24px rgba(255,77,109,.3); }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:14px; padding:9px 20px; }
+.btn-ghost:hover { border-color:var(--muted); color:var(--text); }
+.btn-red   { background:var(--accent2); color:#fff; }
+.btn-red:hover   { background:#ff6b85; }
+.btn-sm    { font-size:13px; padding:7px 18px; letter-spacing:2px; }
+
+.status-msg { margin-top:12px; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--muted); min-height:18px; }
+.status-msg.ok  { color:var(--green); }
+.status-msg.err { color:var(--accent2); }
+
+/* PB badge */
+.pb-badge { display:none; margin-top:14px; background:rgba(0,230,118,.08); border:1px solid rgba(0,230,118,.3); padding:10px 14px; }
+.pb-badge.show { display:block; }
+.pb-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); margin-bottom:4px; }
+.pb-score { font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--green); letter-spacing:3px; }
+
+/* ── WAITING ── */
+#screen-waiting { align-items:center; justify-content:center; padding:40px 24px; text-align:center; }
+.waiting-box { background:var(--surface); border:1px solid var(--border); padding:40px; max-width:500px; width:100%; }
+.waiting-box h2 { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--accent); letter-spacing:3px; margin-bottom:6px; }
+.room-code-display { font-family:'Bebas Neue',sans-serif; font-size:64px; color:var(--gold); letter-spacing:10px; margin:16px 0; }
+.player-roster { text-align:left; margin:20px 0; }
+.player-roster h4 { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--muted); margin-bottom:10px; }
+.roster-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+.roster-dot { width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
+
+/* ── GAME ── */
+#screen-game { flex-direction:column; padding:0; }
+
+.game-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20; flex-wrap:wrap; gap:8px; }
+.game-title { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--accent); letter-spacing:3px; }
+.player-name-badge { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--muted); }
+.player-name-badge.solo-mode { color:var(--green); }
+.player-name-badge.host-mode { color:var(--accent2); }
+
+.xp-badge { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); letter-spacing:2px; }
+.xp-badge span { font-size:11px; letter-spacing:3px; color:var(--muted); }
+
+.pb-header { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); display:none; }
+.pb-header.show { display:block; }
+.pb-header em { color:var(--green); font-style:normal; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; }
+
+.timer-wrap { background:var(--surface); border-bottom:1px solid var(--border); }
+.timer-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); padding:6px 20px 4px; text-align:right; }
+.timer-bar-outer { height:4px; background:var(--border); }
+.timer-bar-inner { height:4px; background:var(--accent2); transition:width 0.5s linear; }
+.timer-bar-inner.solo { background:var(--green); }
+
+.paused-banner { display:none; background:var(--accent2); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:4px; text-align:center; padding:10px; }
+.paused-banner.show { display:block; }
+
+.game-body { display:flex; flex:1; min-height:0; }
+
+.cat-sidebar { width:150px; background:var(--surface); border-right:1px solid var(--border); padding:12px 0; flex-shrink:0; overflow-y:auto; }
+.cat-btn { width:100%; text-align:left; background:transparent; border:none; color:var(--muted); font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; padding:10px 14px; cursor:pointer; transition:all .15s; text-transform:uppercase; border-left:3px solid transparent; display:flex; align-items:center; gap:7px; }
+.cat-btn .ci { font-size:14px; }
+.cat-btn:hover { color:var(--text); }
+.cat-btn.active { color:var(--accent); border-left-color:var(--accent); background:rgba(200,255,0,.05); }
+
+.cards-area { flex:1; padding:18px; overflow-y:auto; }
+.cat-heading { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; margin-bottom:3px; }
+.cat-sub { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--muted); margin-bottom:14px; }
+.cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
+
+.exp-card { background:var(--card); border:1px solid var(--border); padding:13px; cursor:pointer; transition:all .15s; position:relative; overflow:hidden; user-select:none; }
+.exp-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:var(--accent); transform:scaleX(0); transition:transform .15s; }
+.exp-card:hover:not(.claimed):not(.pending) { border-color:#3a3a50; transform:translateY(-2px); }
+.exp-card:hover:not(.claimed):not(.pending)::before { transform:scaleX(1); }
+.exp-card.pending { border-color:var(--gold); background:rgba(255,215,0,.06); cursor:default; }
+.exp-card.pending::before { transform:scaleX(1); background:var(--gold); }
+.exp-card.claimed { border-color:var(--accent); background:rgba(200,255,0,.07); cursor:default; }
+.exp-card.claimed::before { transform:scaleX(1); }
+
+.card-emoji { font-size:24px; margin-bottom:5px; display:block; }
+.card-verb  { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px; }
+.card-phrase { font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
+.card-xp { position:absolute; top:10px; right:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--gold); }
+
+/* ── CARD STATES ── */
+/* locked = used all attempts, no XP */
+.exp-card.locked { border-color:#3a2a2a; background:rgba(255,77,109,.05); cursor:default; opacity:0.7; }
+.exp-card.locked::before { transform:scaleX(1); background:var(--accent2); }
+
+/* second attempt indicator */
+.exp-card.attempt2 { border-color:#8a6a00; background:rgba(255,180,0,.05); }
+.exp-card.attempt2::before { transform:scaleX(1); background:#ffb300; }
+
+/* shake on wrong answer */
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.exp-card.shake { animation:shake .4s ease-out; }
+
+/* ── TYPING OVERLAY ── */
+.type-overlay { display:none; margin-top:10px; }
+.exp-card.pending .type-overlay { display:block; }
+.exp-card.attempt2.pending .type-overlay { display:block; }
+
+.attempt-badge { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin-bottom:6px; }
+.attempt-badge.second { color:#ffb300; }
+
+.sentence-input {
+  width:100%; background:var(--bg); border:1px solid var(--border);
+  color:var(--text); font-family:'Space Mono',monospace; font-size:11px;
+  padding:7px 10px; outline:none; resize:none; line-height:1.5;
+  transition:border-color .2s;
+}
+.sentence-input:focus { border-color:var(--gold); }
+.sentence-input.wrong  { border-color:var(--accent2); animation:inputShake .3s ease-out; }
+@keyframes inputShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+.input-feedback { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:1px; min-height:14px; margin-top:4px; }
+.input-feedback.err  { color:var(--accent2); }
+.input-feedback.hint { color:#ffb300; }
+
+.input-actions { display:flex; gap:6px; margin-top:7px; }
+.btn-submit { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:2px; padding:6px 14px; cursor:pointer; border:none; background:var(--accent); color:var(--bg); flex:1; }
+.btn-submit:hover { background:#daff33; }
+.btn-submit.amber { background:#ffb300; color:var(--bg); }
+.btn-cancel-input { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:2px; padding:6px 10px; cursor:pointer; border:none; background:var(--border); color:var(--muted); }
+
+/* claimed / locked tags */
+.claimed-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:var(--accent); letter-spacing:1px; }
+.exp-card.claimed .claimed-tag { display:block; }
+.locked-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:var(--accent2); letter-spacing:1px; line-height:1.5; }
+.exp-card.locked .locked-tag { display:block; }
+.xp-half-tag { display:none; margin-top:7px; font-family:'Space Mono',monospace; font-size:9px; color:#ffb300; letter-spacing:1px; }
+.exp-card.claimed.half .xp-half-tag { display:block; }
+.exp-card.claimed.half .claimed-tag { display:none; }
+
+.xp-popup { position:fixed; font-family:'Bebas Neue',sans-serif; font-size:44px; color:var(--gold); pointer-events:none; z-index:999; animation:floatUp 1s ease-out forwards; text-shadow:0 0 20px rgba(255,215,0,.6); }
+@keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.3)} }
+
+/* ── HOST FULL-SCREEN VIEW ── */
+.host-view { flex:1; display:none; flex-direction:column; padding:24px; gap:16px; overflow-y:auto; }
+.host-view.show { display:flex; }
+.host-view-header { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:var(--accent2); margin-bottom:4px; }
+.host-lb-full { flex:1; }
+.host-lb-row { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--card); border:1px solid var(--border); margin-bottom:8px; transition:background .4s; }
+.host-lb-row:first-child { border-color:var(--gold); background:rgba(255,215,0,.06); }
+.host-lb-row.flash { animation: lbFlash .6s ease-out; }
+@keyframes lbFlash { 0%{background:rgba(200,255,0,.18)} 100%{background:var(--card)} }
+.hlb-rank { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--muted); width:40px; flex-shrink:0; }
+.hlb-rank.first { color:var(--gold); }
+.hlb-name { font-size:16px; font-weight:600; flex:1; }
+.hlb-sentences { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
+.hlb-xp { font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--gold); flex-shrink:0; }
+.hlb-empty { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:2px; padding:20px 0; }
+
+.host-ctrl-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding-top:16px; border-top:1px solid var(--border); }
+.host-ctrl-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); margin-right:4px; }
+
+/* ── STUDENT MINI LB ── */
+.student-lb { background:var(--surface); border-top:1px solid var(--border); padding:8px 18px; display:none; flex-direction:row; gap:0; overflow-x:auto; flex-shrink:0; align-items:center; }
+.student-lb.show { display:flex; }
+.slb-item { display:flex; align-items:center; gap:5px; white-space:nowrap; padding:0 12px; border-right:1px solid var(--border); }
+.slb-item:first-child { padding-left:0; }
+.slb-item:last-child  { border-right:none; }
+.slb-pos  { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--muted); }
+.slb-name { font-size:12px; font-weight:600; }
+.slb-name.me { color:var(--accent); }
+.slb-xp   { font-family:'Bebas Neue',sans-serif; font-size:13px; color:var(--gold); }
+
+/* ── SOLO PROGRESS PANEL ── */
+.solo-panel { width:210px; background:var(--surface); border-left:1px solid var(--border); padding:14px; flex-shrink:0; display:none; flex-direction:column; }
+.solo-panel.show { display:flex; }
+.solo-panel > h4 { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:3px; color:var(--green); margin-bottom:12px; }
+.solo-stat { padding:10px 0; border-bottom:1px solid var(--border); }
+.solo-stat-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); margin-bottom:4px; }
+.solo-stat-value { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--gold); letter-spacing:2px; }
+.solo-stat-value.green { color:var(--green); }
+.solo-stat-sub { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); margin-top:2px; }
+.solo-progress-wrap { margin-top:12px; }
+.solo-progress-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--muted); margin-bottom:6px; }
+.solo-cat-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.solo-cat-emoji { font-size:14px; width:20px; }
+.solo-cat-bar-outer { flex:1; height:4px; background:var(--border); }
+.solo-cat-bar-inner { height:4px; background:var(--green); transition:width .3s; }
+.solo-cat-count { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); width:30px; text-align:right; flex-shrink:0; }
+
+/* ── RESULTS ── */
+#screen-results { align-items:center; justify-content:center; padding:40px 24px; background:radial-gradient(ellipse at 50% 20%, #1a2a0a 0%, var(--bg) 70%); }
+.results-inner { max-width:720px; width:100%; text-align:center; }
+.results-title { font-family:'Bebas Neue',sans-serif; font-size:60px; color:var(--accent); letter-spacing:6px; }
+.winner-banner { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:4px; color:var(--muted); margin:8px 0 28px; }
+
+.solo-result-card { background:var(--surface); border:1px solid var(--border); padding:28px 32px; margin:0 auto 28px; max-width:460px; }
+.solo-result-card.pb { border-color:var(--green); background:rgba(0,230,118,.05); }
+.src-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+.src-row:last-child { border-bottom:none; }
+.src-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); }
+.src-val   { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--gold); letter-spacing:2px; }
+.src-val.green { color:var(--green); }
+.src-val.red   { color:var(--accent2); }
+.pb-flash { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:4px; color:var(--green); margin-bottom:12px; display:none; }
+.pb-flash.show { display:block; animation:pbPulse 1s ease-out; }
+@keyframes pbPulse { 0%{opacity:0;transform:scale(.8)} 50%{opacity:1;transform:scale(1.05)} 100%{transform:scale(1)} }
+
+.podium { display:flex; justify-content:center; align-items:flex-end; gap:10px; margin:20px 0; }
+.podium-slot { flex:1; max-width:200px; background:var(--surface); border:1px solid var(--border); padding:18px 12px; display:flex; flex-direction:column; align-items:center; }
+.podium-slot.gold { border-color:var(--gold); background:rgba(255,215,0,.07); }
+.p-pos  { font-family:'Bebas Neue',sans-serif; font-size:42px; line-height:1; }
+.podium-slot.gold .p-pos { color:var(--gold); }
+.podium-slot:not(.gold) .p-pos { color:var(--muted); }
+.p-name { font-weight:600; font-size:16px; margin:6px 0 3px; }
+.p-xp   { font-family:'Space Mono',monospace; font-size:12px; color:var(--gold); }
+
+.sentences-section { margin-top:28px; text-align:left; }
+.sentences-section h3 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:var(--accent); margin-bottom:12px; }
+.sentence-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:280px; overflow-y:auto; }
+.s-item { background:var(--card); border-left:3px solid var(--accent); padding:9px 12px; }
+.s-name { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--accent2); margin-bottom:3px; text-transform:uppercase; }
+.s-text { font-size:13px; line-height:1.5; }
+
+.grammar-float { position:fixed; bottom:18px; right:18px; background:var(--surface); border:1px solid var(--accent); padding:14px 18px; max-width:260px; z-index:50; display:none; }
+.grammar-float h4 { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--accent); text-transform:uppercase; margin-bottom:8px; }
+.g-row { display:flex; gap:6px; margin-bottom:5px; align-items:baseline; }
+.g-sub  { color:var(--muted); font-size:11px; width:54px; flex-shrink:0; }
+.g-form { font-family:'Space Mono',monospace; font-size:11px; color:var(--text); }
+.g-form em { color:var(--accent); font-style:normal; }
+
+#connecting { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:1000; flex-direction:column; gap:12px; }
+#connecting p { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--muted); }
+.spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<div id="connecting" style="display:none"><div class="spinner"></div><p id="connecting-msg">CONNECTING...</p></div>
+
+<!-- LOBBY -->
+<div id="screen-lobby" class="screen active">
+  <div style="margin-bottom:28px">
+    <div class="logo">LIFE<br>XP</div>
+    <div class="logo-sub">PRESENT PERFECT</div>
+    <div class="grammar-pill">have / has + past participle</div>
+  </div>
+  <div class="lobby-panels">
+
+    <!-- SOLO -->
+    <div class="lobby-panel solo">
+      <h3>SOLO</h3>
+      <p>Play alone. Beat the clock. Try to beat your personal best.</p>
+      <div class="field-group">
+        <input class="txt-input" id="solo-name" placeholder="Your name" maxlength="20">
+        <button class="btn btn-green" onclick="startSolo()">PLAY SOLO →</button>
+      </div>
+      <div class="pb-badge" id="pb-badge">
+        <div class="pb-label">PERSONAL BEST</div>
+        <div class="pb-score" id="pb-score">—</div>
+      </div>
+      <div class="status-msg" id="solo-status"></div>
+    </div>
+
+    <!-- JOIN -->
+    <div class="lobby-panel">
+      <h3>JOIN GAME</h3>
+      <p>Enter the room code from the board and your name.</p>
+      <div class="field-group">
+        <input class="txt-input" id="join-code" placeholder="ROOM CODE" maxlength="6"
+          style="text-transform:uppercase;letter-spacing:4px;font-family:'Bebas Neue',sans-serif;font-size:22px">
+        <input class="txt-input" id="join-name" placeholder="Your name" maxlength="20">
+        <button class="btn btn-lime" onclick="joinGame()">JOIN →</button>
+      </div>
+      <div class="status-msg" id="join-status"></div>
+    </div>
+
+    <!-- HOST -->
+    <div class="lobby-panel host-panel">
+      <h3>HOST GAME</h3>
+      <p>Create a room and control the game. Students join — you watch, pause, and end.</p>
+      <div class="field-group">
+        <button class="btn btn-pink" onclick="hostGame()">CREATE ROOM →</button>
+      </div>
+      <div class="status-msg" id="host-status"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-box">
+    <h2 id="waiting-title">WAITING FOR PLAYERS</h2>
+    <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:4px">ROOM CODE</div>
+    <div class="room-code-display" id="room-code-display">----</div>
+    <div class="player-roster">
+      <h4>PLAYERS CONNECTED</h4>
+      <div id="roster-list"></div>
+    </div>
+    <div id="host-start-wrap" style="display:none;margin-top:16px">
+      <button class="btn btn-lime" id="btn-start" onclick="hostStartGame()">START GAME →</button>
+      <p style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:1px">Need at least 1 student</p>
+    </div>
+    <div id="student-wait-msg" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:16px;display:none">
+      WAITING FOR HOST TO START...
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <div class="game-title">LIFE XP</div>
+    <div class="player-name-badge" id="player-badge">—</div>
+    <div class="pb-header" id="pb-header">PB <em id="pb-header-val">—</em></div>
+    <div class="xp-badge" id="xp-badge-wrap"><span>XP </span><span id="my-xp">0</span></div>
+  </div>
+  <div class="timer-wrap">
+    <div class="timer-label" id="timer-label">TIME REMAINING: 3:00</div>
+    <div class="timer-bar-outer"><div class="timer-bar-inner" id="timer-bar" style="width:100%"></div></div>
+  </div>
+  <div class="paused-banner" id="paused-banner">⏸ GAME PAUSED</div>
+
+  <div class="game-body">
+    <!-- Category sidebar — hidden in host mode -->
+    <div class="cat-sidebar" id="cat-sidebar"></div>
+
+    <!-- Cards area — hidden in host mode -->
+    <div class="cards-area" id="cards-area">
+      <div class="cat-heading" id="cat-heading">FOOD &amp; DRINK</div>
+      <div class="cat-sub">CLICK a card → type the sentence → SUBMIT · Full XP on 1st attempt, half on 2nd</div>
+      <div class="cards-grid" id="cards-grid"></div>
+    </div>
+
+    <!-- Host full-screen leaderboard view (pure host mode) -->
+    <div class="host-view" id="host-view">
+      <div>
+        <div class="host-view-header">LIVE LEADERBOARD</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted)" id="host-player-count">0 players</div>
+      </div>
+      <div class="host-lb-full" id="host-lb-full">
+        <div class="hlb-empty">Waiting for first claims...</div>
+      </div>
+      <div class="host-ctrl-bar">
+        <span class="host-ctrl-label">CONTROLS</span>
+        <button class="btn btn-ghost btn-sm" id="btn-pause-full" onclick="hostTogglePause()">⏸ PAUSE</button>
+        <button class="btn btn-red btn-sm" onclick="hostEndGame()">■ END GAME</button>
+      </div>
+    </div>
+
+    <!-- Solo progress panel -->
+    <div class="solo-panel" id="solo-panel">
+      <h4>MY PROGRESS</h4>
+      <div class="solo-stat">
+        <div class="solo-stat-label">TOTAL XP</div>
+        <div class="solo-stat-value" id="sp-xp">0</div>
+        <div class="solo-stat-sub" id="sp-xp-max"></div>
+      </div>
+      <div class="solo-stat">
+        <div class="solo-stat-label">SENTENCES</div>
+        <div class="solo-stat-value green" id="sp-count">0</div>
+        <div class="solo-stat-sub" id="sp-count-max"></div>
+      </div>
+      <div class="solo-progress-wrap">
+        <div class="solo-progress-label">BY CATEGORY</div>
+        <div id="sp-cats"></div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost btn-sm" style="width:100%" onclick="quitSolo()">✕ QUIT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student mini LB strip -->
+  <div class="student-lb" id="student-lb"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="results-inner">
+    <div class="results-title" id="results-title">GAME OVER</div>
+    <div class="winner-banner" id="winner-banner">—</div>
+
+    <div id="solo-result-wrap" style="display:none">
+      <div class="pb-flash" id="pb-flash">🏆 NEW PERSONAL BEST!</div>
+      <div class="solo-result-card" id="solo-result-card">
+        <div class="src-row">
+          <span class="src-label">TOTAL XP</span>
+          <span class="src-val" id="sr-xp">0</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">SENTENCES CLAIMED</span>
+          <span class="src-val green" id="sr-count">0</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">PERSONAL BEST</span>
+          <span class="src-val green" id="sr-pb">—</span>
+        </div>
+        <div class="src-row">
+          <span class="src-label">VS BEST</span>
+          <span class="src-val" id="sr-diff">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="multi-result-wrap">
+      <div class="podium" id="podium"></div>
+    </div>
+
+    <div class="sentences-section">
+      <h3>SENTENCES USED</h3>
+      <div class="sentence-grid" id="sentence-grid"></div>
+    </div>
+    <button class="btn btn-lime" style="margin-top:28px" onclick="location.reload()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- Grammar float -->
+<div class="grammar-float" id="grammar-float">
+  <h4>Grammar</h4>
+  <div class="g-row"><span class="g-sub">I/You/We</span><span class="g-form"><em>have</em> + past participle</span></div>
+  <div class="g-row"><span class="g-sub">He/She/It</span><span class="g-form"><em>has</em> + past participle</span></div>
+  <div class="g-row" style="margin-top:6px"><span class="g-sub">✗ NOT</span><span class="g-form" style="color:var(--accent2)">have <em>go</em> · has <em>eat</em></span></div>
+  <div class="g-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px"><span class="g-sub" style="width:auto;color:var(--muted);font-size:9px">1st try = full XP · 2nd try = ½ XP · miss both = locked</span></div>
+</div>
+
+<script>
+const ABLY_KEY      = '5toTPA._mWevg:t5wRw5Kjwsmeqtdo3Lir4oPJ3M3PVN3ci_GJDchtRsA';
+const GAME_DURATION = 180;
+
+const CATEGORIES = [
+  { id:'food', icon:'🍜', label:'Food & Drink', cards:[
+    { emoji:'🍕', verb:'eat',   phrase:'pizza for breakfast',          sentence:'I have eaten pizza for breakfast.',          xp:10 },
+    { emoji:'🌶️', verb:'try',   phrase:'really spicy food',            sentence:'I have tried really spicy food.',            xp:15 },
+    { emoji:'🍣', verb:'eat',   phrase:'sushi',                        sentence:'I have eaten sushi.',                        xp:10 },
+    { emoji:'🧇', verb:'make',  phrase:'pancakes',                     sentence:'I have made pancakes.',                      xp:10 },
+    { emoji:'🥑', verb:'eat',   phrase:'avocado',                      sentence:'I have eaten avocado.',                      xp:5  },
+    { emoji:'☕', verb:'drink', phrase:'coffee',                       sentence:'I have drunk coffee.',                       xp:10 },
+  ]},
+  { id:'travel', icon:'✈️', label:'Travel', cards:[
+    { emoji:'✈️', verb:'fly',   phrase:'on a plane',                   sentence:'I have flown on a plane.',                   xp:15 },
+    { emoji:'🌊', verb:'swim',  phrase:'in the sea',                   sentence:'I have swum in the sea.',                    xp:10 },
+    { emoji:'🏔️', verb:'climb', phrase:'a mountain',                   sentence:'I have climbed a mountain.',                 xp:20 },
+    { emoji:'🚂', verb:'ride',  phrase:'a night train',                sentence:'I have ridden a night train.',               xp:15 },
+    { emoji:'🌍', verb:'visit', phrase:'three countries',              sentence:'I have visited three countries.',            xp:20 },
+    { emoji:'🏖️', verb:'sleep', phrase:'on a beach',                   sentence:'I have slept on a beach.',                   xp:20 },
+  ]},
+  { id:'sports', icon:'⚽', label:'Sports', cards:[
+    { emoji:'⚽', verb:'score', phrase:'a goal',                       sentence:'I have scored a goal.',                      xp:15 },
+    { emoji:'🤸', verb:'do',    phrase:'a cartwheel',                  sentence:'I have done a cartwheel.',                   xp:10 },
+    { emoji:'🏊', verb:'swim',  phrase:'50 metres',                    sentence:'I have swum 50 metres.',                     xp:15 },
+    { emoji:'🛹', verb:'ride',  phrase:'a skateboard',                 sentence:'I have ridden a skateboard.',                xp:15 },
+    { emoji:'🥋', verb:'do',    phrase:'a martial art',                sentence:'I have done a martial art.',                 xp:20 },
+    { emoji:'🎿', verb:'ski',   phrase:'down a slope',                 sentence:'I have skied down a slope.',                 xp:15 },
+  ]},
+  { id:'culture', icon:'🎬', label:'Culture', cards:[
+    { emoji:'🎵', verb:'sing',    phrase:'in front of people',         sentence:'I have sung in front of people.',            xp:20 },
+    { emoji:'📚', verb:'read',    phrase:'a whole book in English',    sentence:'I have read a whole book in English.',       xp:25 },
+    { emoji:'🎬', verb:'see',     phrase:'a film in another language', sentence:'I have seen a film in another language.',    xp:15 },
+    { emoji:'🎨', verb:'paint',   phrase:'a picture',                  sentence:'I have painted a picture.',                  xp:10 },
+    { emoji:'🎭', verb:'perform', phrase:'on stage',                   sentence:'I have performed on stage.',                 xp:25 },
+    { emoji:'📺', verb:'watch',   phrase:'a series all night',         sentence:'I have watched a series all night.',         xp:15 },
+  ]},
+  { id:'wild', icon:'🐉', label:'Wild Cards', cards:[
+    { emoji:'🐍', verb:'hold',  phrase:'a snake',                      sentence:'I have held a snake.',                       xp:30 },
+    { emoji:'💀', verb:'break', phrase:'a bone',                       sentence:'I have broken a bone.',                      xp:25 },
+    { emoji:'🚒', verb:'ride',  phrase:'a fire engine',                sentence:'I have ridden a fire engine.',               xp:40 },
+    { emoji:'👻', verb:'see',   phrase:'something inexplicable',       sentence:'I have seen something inexplicable.',        xp:35 },
+    { emoji:'💸', verb:'lose',  phrase:'money',                        sentence:'I have lost money.',                         xp:15 },
+    { emoji:'🌋', verb:'stand', phrase:'next to a volcano',            sentence:'I have stood next to a volcano.',            xp:30 },
+  ]},
+];
+
+const MAX_XP        = CATEGORIES.reduce((t, c) => t + c.cards.reduce((s, card) => s + card.xp, 0), 0);
+const MAX_SENTENCES = CATEGORIES.reduce((t, c) => t + c.cards.length, 0);
+
+// ── STATE ──
+let ably, channel;
+let isSolo    = false;
+let isHost    = false;   // pure host — no gameplay
+let roomCode  = '';
+let myName    = '';
+let myXP      = 0;
+let myClaimed = new Set();
+let mySentences = [];
+let activeCat = 0;
+let pendingCard = null;
+
+let timerInterval = null;
+let endTime    = 0;
+let paused     = false;
+let pausedAt   = 0;
+let gameActive = false;
+
+let leaderboard = {};
+let players     = [];
+
+// ── HELPERS ──
+function $(id){ return document.getElementById(id); }
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function setStatus(el, msg, cls=''){
+  el.textContent = msg;
+  el.className   = 'status-msg' + (cls ? ' ' + cls : '');
+}
+function showConnecting(msg){
+  $('connecting').style.display = 'flex';
+  $('connecting-msg').textContent = msg || 'CONNECTING...';
+}
+function hideConnecting(){ $('connecting').style.display = 'none'; }
+function genCode(){
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:4}, () => c[Math.floor(Math.random()*c.length)]).join('');
+}
+function timeRemaining(){
+  if(paused) return Math.max(0, Math.round((endTime - pausedAt) / 1000));
+  return Math.max(0, Math.round((endTime - Date.now()) / 1000));
+}
+
+// ── PERSONAL BEST — keyed per player name ──
+function pbKey(name){ return 'lifexp_pb_' + name.toLowerCase().replace(/\s+/g,'_'); }
+function getPB(name){ try { return parseInt(localStorage.getItem(pbKey(name))) || 0; } catch(e){ return 0; } }
+function setPB(name, val){ try { localStorage.setItem(pbKey(name), val); } catch(e){} }
+
+// Update PB badge live as name is typed
+$('solo-name').addEventListener('input', () => {
+  const name = $('solo-name').value.trim();
+  const pb   = name ? getPB(name) : 0;
+  if(pb > 0){
+    $('pb-badge').classList.add('show');
+    $('pb-score').textContent = pb + ' XP';
+  } else {
+    $('pb-badge').classList.remove('show');
+  }
+});
+
+// ── SOLO ──
+function startSolo(){
+  const name = $('solo-name').value.trim();
+  if(!name){ setStatus($('solo-status'), 'Enter your name', 'err'); return; }
+  isSolo    = true;
+  isHost    = false;
+  myName    = name;
+  myXP      = 0;
+  myClaimed = new Set();
+  mySentences = [];
+  Object.keys(cardAttempts).forEach(k => delete cardAttempts[k]);
+  endTime    = Date.now() + GAME_DURATION * 1000;
+  paused     = false;
+  gameActive = true;
+  beginGame();
+}
+
+function quitSolo(){
+  clearInterval(timerInterval);
+  gameActive = false;
+  isSolo     = false;
+  location.reload();
+}
+
+// ── ABLY ──
+async function initAbly(clientId){
+  ably = new Ably.Realtime({ key: ABLY_KEY, clientId });
+  return new Promise((res, rej) => {
+    ably.connection.on('connected', res);
+    ably.connection.on('failed', rej);
+  });
+}
+
+// ── HOST (pure — no gameplay) ──
+async function hostGame(){
+  isHost   = true;
+  isSolo   = false;
+  myName   = '';
+  roomCode = genCode();
+  showConnecting('CREATING ROOM...');
+  try {
+    await initAbly('host-' + roomCode);
+    channel = ably.channels.get('lifexp-' + roomCode);
+    channel.subscribe(handleMessage);
+    hideConnecting();
+    leaderboard = {};
+    players     = [];
+    showWaitingRoom();
+    setStatus($('host-status'), 'Room ready: ' + roomCode, 'ok');
+  } catch(e){
+    hideConnecting();
+    setStatus($('host-status'), 'Connection failed', 'err');
+  }
+}
+
+function showWaitingRoom(){
+  $('room-code-display').textContent  = roomCode;
+  $('waiting-title').textContent      = isHost ? 'WAITING FOR PLAYERS' : 'JOINED — WAITING TO START...';
+  $('host-start-wrap').style.display  = isHost ? 'block' : 'none';
+  $('student-wait-msg').style.display = isHost ? 'none' : 'block';
+  updateRoster();
+  showScreen('screen-waiting');
+}
+
+function updateRoster(){
+  $('roster-list').innerHTML = players.length
+    ? players.map(p =>
+        `<div class="roster-item"><div class="roster-dot"></div>${p}</div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:8px 0">No players yet</div>';
+  const btn = $('btn-start');
+  if(btn){
+    const ok = players.length >= 1;
+    btn.disabled      = !ok;
+    btn.style.opacity = ok ? '1' : '0.5';
+  }
+}
+
+function hostStartGame(){
+  if(players.length < 1) return;
+  const et = Date.now() + GAME_DURATION * 1000;
+  endTime    = et;
+  gameActive = true;
+  channel.publish('game-start', { endTime: et, players: [...players] });
+  beginGame();
+}
+
+// ── JOIN ──
+async function joinGame(){
+  const code = $('join-code').value.trim().toUpperCase();
+  const name = $('join-name').value.trim();
+  if(!code){ setStatus($('join-status'), 'Enter a room code', 'err'); return; }
+  if(!name){ setStatus($('join-status'), 'Enter your name',   'err'); return; }
+  showConnecting('JOINING...');
+  roomCode = code;
+  myName   = name;
+  isHost   = false;
+  isSolo   = false;
+  // Reset game state in case of rejoin
+  myXP      = 0;
+  myClaimed = new Set();
+  mySentences = [];
+  Object.keys(cardAttempts).forEach(k => delete cardAttempts[k]);
+  try {
+    await initAbly(name + '-' + Date.now());
+    channel = ably.channels.get('lifexp-' + roomCode);
+    channel.subscribe(handleMessage);
+    channel.publish('player-join', { name });
+    hideConnecting();
+    showWaitingRoom();
+  } catch(e){
+    hideConnecting();
+    setStatus($('join-status'), 'Could not connect', 'err');
+  }
+}
+
+// ── MESSAGE HANDLER ──
+function handleMessage(msg){
+  const ev   = msg.name;
+  const data = msg.data;
+
+  if(isHost){
+    if(ev === 'player-join'){
+      if(players.includes(data.name)){
+        channel.publish('name-rejected', { name: data.name });
+        return;
+      }
+      players.push(data.name);
+      if(!leaderboard[data.name]) leaderboard[data.name] = { xp:0, sentences:[] };
+      updateRoster();
+      // Update player count in host view if game already running
+      if(gameActive) updateHostPlayerCount();
+      channel.publish('room-state', {
+        players: [...players], roomCode,
+        gameActive, endTime, paused, pausedAt,
+        leaderboard: buildLBArray()
+      });
+    }
+    if(ev === 'xp-update'){
+      const { name, xp, sentence, cardId } = data;
+      if(!leaderboard[name]) leaderboard[name] = { xp:0, sentences:[] };
+      leaderboard[name].xp = xp;
+      if(sentence && !leaderboard[name].sentences.find(s => s.id === cardId)){
+        leaderboard[name].sentences.push({ id: cardId, sentence });
+      }
+      updateHostFullLB(name);
+      channel.publish('leaderboard-update', { lb: buildLBArray() });
+    }
+    return; // host never processes its own control events
+  }
+
+  // Student events
+  if(ev === 'name-rejected' && data.name === myName){
+    ably.close();
+    showScreen('screen-lobby');
+    setStatus($('join-status'), 'Name taken — choose another', 'err');
+    return;
+  }
+  if(ev === 'room-state'){
+    players = data.players || [];
+    updateRoster();
+    if(data.gameActive && !gameActive){
+      gameActive = true; endTime = data.endTime;
+      paused = data.paused; pausedAt = data.pausedAt || 0;
+      beginGame();
+      if(data.leaderboard) renderStudentLB(data.leaderboard);
+    }
+  }
+  if(ev === 'game-start'){
+    gameActive = true; endTime = data.endTime;
+    players = data.players || players; paused = false;
+    beginGame();
+  }
+  if(ev === 'game-pause'){
+    paused = data.paused; pausedAt = data.pausedAt || 0;
+    if(!paused && data.endTime) endTime = data.endTime;
+    $('paused-banner').classList.toggle('show', paused);
+  }
+  if(ev === 'leaderboard-update'){
+    renderStudentLB(data.lb);
+  }
+  if(ev === 'game-end'){
+    clearInterval(timerInterval);
+    gameActive = false;
+    showResults(data.leaderboard);
+  }
+}
+
+// ── BEGIN GAME ──
+function beginGame(){
+  showScreen('screen-game');
+  $('grammar-float').style.display = 'block';
+
+  if(isHost){
+    // Pure host view: hide player elements, show full-screen LB
+    $('player-badge').textContent = 'HOST';
+    $('player-badge').classList.add('host-mode');
+    $('xp-badge-wrap').style.display  = 'none';
+    $('cat-sidebar').style.display    = 'none';
+    $('cards-area').style.display     = 'none';
+    $('grammar-float').style.display  = 'none'; // host doesn't need grammar panel
+    $('host-view').classList.add('show');
+    updateHostPlayerCount();
+    updateHostFullLB();
+    startHostTimer();
+
+  } else if(isSolo){
+    $('player-badge').textContent = myName.toUpperCase();
+    $('player-badge').classList.add('solo-mode');
+    $('timer-bar').classList.add('solo');
+    const pb = getPB(myName);
+    if(pb > 0){
+      $('pb-header').classList.add('show');
+      $('pb-header-val').textContent = pb + ' XP';
+    }
+    $('solo-panel').classList.add('show');
+    buildCatSidebar();
+    switchCategory(0);
+    buildSoloCatProgress();
+    updateTimerDisplay();
+    startSoloTimer();
+
+  } else {
+    // Student
+    $('player-badge').textContent = myName.toUpperCase();
+    $('student-lb').classList.add('show');
+    buildCatSidebar();
+    switchCategory(0);
+    updateTimerDisplay();
+    startStudentTimer();
+  }
+}
+
+// ── TIMERS ──
+function startSoloTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    updateTimerDisplay();
+    if(timeRemaining() <= 0){
+      clearInterval(timerInterval);
+      gameActive = false;
+      showSoloResults();
+    }
+  }, 500);
+}
+
+function startHostTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if(paused) return;
+    updateTimerDisplay();
+    if(timeRemaining() <= 0){
+      clearInterval(timerInterval);
+      hostEndGame();
+    }
+  }, 1000);
+}
+
+function startStudentTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if(!paused){
+      updateTimerDisplay();
+      if(timeRemaining() <= 0) clearInterval(timerInterval);
+    }
+  }, 500);
+}
+
+function updateTimerDisplay(){
+  const rem = timeRemaining();
+  const m   = Math.floor(rem / 60);
+  const s   = String(rem % 60).padStart(2, '0');
+  $('timer-label').textContent = `TIME REMAINING: ${m}:${s}`;
+  $('timer-bar').style.width   = (rem / GAME_DURATION * 100) + '%';
+}
+
+function hostTogglePause(){
+  paused = !paused;
+  if(paused){ pausedAt = Date.now(); }
+  else { endTime += Date.now() - pausedAt; pausedAt = 0; }
+  const label = paused ? '▶ RESUME' : '⏸ PAUSE';
+  $('btn-pause-full').textContent = label;
+  $('paused-banner').classList.toggle('show', paused);
+  channel.publish('game-pause', { paused, pausedAt, endTime });
+}
+
+function hostEndGame(){
+  if(!confirm('End the game now? This cannot be undone.')) return;
+  clearInterval(timerInterval);
+  gameActive = false;
+  const lb = buildLBArray();
+  channel.publish('game-end', { leaderboard: lb });
+  showResults(lb);
+}
+
+// ── LEADERBOARD ──
+function buildLBArray(){
+  return Object.entries(leaderboard)
+    .map(([name, d]) => ({ name, xp: d.xp, sentences: d.sentences }))
+    .sort((a, b) => b.xp - a.xp);
+}
+
+function updateHostPlayerCount(){
+  $('host-player-count').textContent = players.length + ' player' + (players.length !== 1 ? 's' : '') + ' connected';
+}
+
+let lastUpdatedName = null;
+
+function updateHostFullLB(updatedName){
+  if(updatedName) lastUpdatedName = updatedName;
+  const sorted = buildLBArray();
+  if(!sorted.length){
+    $('host-lb-full').innerHTML = '<div class="hlb-empty">Waiting for first claims...</div>';
+    return;
+  }
+  $('host-lb-full').innerHTML = sorted.map((p, i) =>
+    `<div class="host-lb-row ${p.name === lastUpdatedName ? 'flash' : ''}" id="hlb-${i}">
+      <div class="hlb-rank ${i===0?'first':''}">${i+1}</div>
+      <div>
+        <div class="hlb-name">${p.name}</div>
+        <div class="hlb-sentences">${p.sentences.length} sentence${p.sentences.length!==1?'s':''}</div>
+      </div>
+      <div class="hlb-xp">${p.xp} XP</div>
+    </div>`
+  ).join('');
+  lastUpdatedName = null;
+}
+
+function renderStudentLB(lb){
+  $('student-lb').innerHTML = lb.map((p, i) =>
+    `<div class="slb-item">
+      <span class="slb-pos">${i+1}.</span>
+      <span class="slb-name ${p.name===myName?'me':''}">${p.name}</span>
+      <span class="slb-xp">${p.xp} XP</span>
+    </div>`
+  ).join('');
+}
+
+// ── SOLO PROGRESS PANEL ──
+function buildSoloCatProgress(){
+  $('sp-xp-max').textContent    = 'of ' + MAX_XP + ' max';
+  $('sp-count-max').textContent = 'of ' + MAX_SENTENCES + ' total';
+  $('sp-cats').innerHTML = CATEGORIES.map((cat, ci) =>
+    `<div class="solo-cat-row">
+      <span class="solo-cat-emoji">${cat.icon}</span>
+      <div class="solo-cat-bar-outer"><div class="solo-cat-bar-inner" id="scat-bar-${ci}" style="width:0%"></div></div>
+      <span class="solo-cat-count" id="scat-count-${ci}">0/${cat.cards.length}</span>
+    </div>`
+  ).join('');
+}
+
+function updateSoloPanel(){
+  $('sp-xp').textContent    = myXP;
+  $('sp-count').textContent = mySentences.length;
+  $('my-xp').textContent    = myXP;
+  CATEGORIES.forEach((cat, ci) => {
+    const claimed = cat.cards.filter((_, ki) => myClaimed.has(cardId(ci, ki))).length;
+    const bar = $('scat-bar-' + ci);
+    const cnt = $('scat-count-' + ci);
+    if(bar) bar.style.width   = Math.round(claimed / cat.cards.length * 100) + '%';
+    if(cnt) cnt.textContent   = `${claimed}/${cat.cards.length}`;
+  });
+}
+
+// ── CATEGORIES ──
+function buildCatSidebar(){
+  $('cat-sidebar').innerHTML = CATEGORIES.map((c, i) =>
+    `<button class="cat-btn ${i===0?'active':''}" onclick="switchCategory(${i})">
+      <span class="ci">${c.icon}</span>${c.label}
+    </button>`
+  ).join('');
+}
+
+function switchCategory(i){
+  activeCat = i;
+  document.querySelectorAll('.cat-btn').forEach((b, j) => b.classList.toggle('active', i===j));
+  $('cat-heading').textContent = CATEGORIES[i].label.toUpperCase();
+  renderCards();
+}
+
+// ── CARDS ──
+function cardId(ci, ki){ return `${ci}-${ki}`; }
+
+// attempt tracking: id -> 0 (untouched), 1 (first attempt used), 2 (locked)
+const cardAttempts = {};
+
+function normalize(str){
+  return str.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g,' ');
+}
+
+function renderCards(){
+  const cat = CATEGORIES[activeCat];
+  $('cards-grid').innerHTML = cat.cards.map((card, ki) => {
+    const id       = cardId(activeCat, ki);
+    const claimed  = myClaimed.has(id);
+    const attempts = cardAttempts[id] || 0;
+    const locked   = attempts >= 2 && !claimed;
+    const attempt2 = attempts === 1 && !claimed;
+    const isHalf   = claimed && (cardAttempts[id] === 2); // claimed on 2nd attempt (stored as 2)
+
+    let stateClass = '';
+    if(claimed)  stateClass = 'claimed' + (isHalf ? ' half' : '');
+    else if(locked)   stateClass = 'locked';
+    else if(attempt2) stateClass = 'attempt2';
+
+    // XP display: show half if on second attempt
+    const xpDisplay = attempt2 ? Math.floor(card.xp / 2) : card.xp;
+    const xpLabel   = attempt2 ? `+${xpDisplay} <span style="font-size:9px;color:#ffb300">½</span>` : `+${card.xp}`;
+
+    return `<div class="exp-card ${stateClass}" id="card-${id}" onclick="cardClick(${activeCat},${ki})">
+      <span class="card-emoji">${card.emoji}</span>
+      <div class="card-verb">have ${card.verb}</div>
+      <div class="card-phrase">${card.phrase}</div>
+      <div class="card-xp">${xpLabel}</div>
+      <div class="type-overlay" id="overlay-${id}">
+        <div class="attempt-badge ${attempt2?'second':''}" id="badge-${id}">
+          ${attempt2 ? 'ATTEMPT 2 · HALF XP' : 'ATTEMPT 1 · FULL XP'}
+        </div>
+        <textarea class="sentence-input" id="input-${id}" rows="2"
+          placeholder="Write the sentence..." 
+          onkeydown="inputKeydown(event,'${id}',${activeCat},${ki})"
+        ></textarea>
+        <div class="input-feedback" id="feedback-${id}"></div>
+        <div class="input-actions">
+          <button class="btn-submit ${attempt2?'amber':''}" onclick="submitInput(event,'${id}',${activeCat},${ki})">
+            ${attempt2 ? 'SUBMIT (½ XP)' : 'SUBMIT'}
+          </button>
+          <button class="btn-cancel-input" onclick="cancelInput(event,'${id}')">✕</button>
+        </div>
+      </div>
+      <div class="claimed-tag">✓ CLAIMED · +${card.xp} XP</div>
+      <div class="xp-half-tag">✓ CLAIMED · +${Math.floor(card.xp/2)} XP (2nd attempt)</div>
+      <div class="locked-tag" id="locked-${id}">✗ LOCKED<br><span style="color:var(--muted);font-size:8px">${locked ? card.sentence : ''}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function cardClick(ci, ki){
+  if(!gameActive || isHost) return;
+  if(!isSolo && paused) return;
+  const id       = cardId(ci, ki);
+  const attempts = cardAttempts[id] || 0;
+  if(myClaimed.has(id)) return;
+  if(attempts >= 2) return; // locked
+  // If this card is already open, do nothing
+  if(pendingCard === id) return;
+  // Close any other open card
+  if(pendingCard !== null) closeInput(pendingCard);
+  pendingCard = id;
+  const el = document.getElementById('card-' + id);
+  if(!el) return;
+  if(attempts === 0) el.classList.add('pending');
+  else if(attempts === 1) el.classList.add('pending'); // attempt2 — show overlay
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  // Focus the textarea after a brief delay for scroll
+  setTimeout(() => {
+    const inp = document.getElementById('input-' + id);
+    if(inp) inp.focus();
+  }, 150);
+}
+
+function closeInput(id){
+  const el = document.getElementById('card-' + id);
+  if(!el) return;
+  const attempts = cardAttempts[id] || 0;
+  if(attempts <= 1) el.classList.remove('pending'); // remove pending from both attempt1 and attempt2 opens
+  const inp = document.getElementById('input-' + id);
+  if(inp){ inp.value = ''; inp.classList.remove('wrong'); }
+  const fb = document.getElementById('feedback-' + id);
+  if(fb) fb.textContent = '';
+  if(pendingCard === id) pendingCard = null;
+}
+
+function cancelInput(e, id){
+  e.stopPropagation();
+  closeInput(id);
+}
+
+function inputKeydown(e, id, ci, ki){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    submitInput(e, id, ci, ki);
+  }
+  if(e.key === 'Escape') closeInput(id);
+}
+
+function submitInput(e, id, ci, ki){
+  e.stopPropagation();
+  if(!gameActive || isHost) return;
+  if(!isSolo && paused) return;
+
+  const inp  = document.getElementById('input-' + id);
+  const fb   = document.getElementById('feedback-' + id);
+  const card = CATEGORIES[ci].cards[ki];
+  const el   = document.getElementById('card-' + id);
+  if(!inp) return;
+
+  const typed   = normalize(inp.value);
+  const correct = normalize(card.sentence);
+
+  if(!typed){
+    fb.textContent = 'Write the sentence first.';
+    fb.className   = 'input-feedback err';
+    return;
+  }
+
+  const attempts = cardAttempts[id] || 0;
+
+  if(typed === correct){
+    // ── CORRECT ──
+    const earnedXP = attempts === 0 ? card.xp : Math.floor(card.xp / 2);
+    const isHalf   = attempts === 1;
+    myClaimed.add(id);
+    cardAttempts[id] = attempts + 1; // record which attempt succeeded
+    myXP += earnedXP;
+    mySentences.push({ id, sentence: card.sentence, xp: earnedXP });
+    pendingCard = null;
+    // Re-render this card as claimed
+    el.className = 'exp-card claimed' + (isHalf ? ' half' : '');
+    el.onclick   = null;
+    const overlay = document.getElementById('overlay-' + id);
+    if(overlay) overlay.style.display = 'none';
+    // Trigger re-render of just the tags via innerHTML patch
+    renderSingleCardTags(el, card, earnedXP, isHalf);
+    $('my-xp').textContent = myXP;
+    showXPPop(el, earnedXP);
+    if(isSolo) updateSoloPanel();
+    else channel.publish('xp-update', { name:myName, xp:myXP, sentence:card.sentence, cardId:id });
+
+  } else {
+    // ── WRONG ──
+    inp.classList.add('wrong');
+    setTimeout(() => inp.classList.remove('wrong'), 400);
+
+    if(attempts === 0){
+      // First attempt failed — move to attempt 2
+      cardAttempts[id] = 1;
+      fb.textContent   = 'Not quite. One more attempt — half XP.';
+      fb.className     = 'input-feedback hint';
+      // Update card state to attempt2
+      el.classList.remove('pending');
+      el.classList.add('attempt2');
+      // Update badge and button
+      const badge = document.getElementById('badge-' + id);
+      if(badge){ badge.textContent = 'ATTEMPT 2 · HALF XP'; badge.className = 'attempt-badge second'; }
+      const xpDiv = el.querySelector('.card-xp');
+      if(xpDiv) xpDiv.innerHTML = `+${Math.floor(card.xp/2)} <span style="font-size:9px;color:#ffb300">½</span>`;
+      const btn = el.querySelector('.btn-submit');
+      if(btn){ btn.textContent = 'SUBMIT (½ XP)'; btn.classList.add('amber'); }
+      inp.value = '';
+      inp.focus();
+    } else {
+      // Second attempt failed — lock the card
+      cardAttempts[id] = 2;
+      pendingCard = null;
+      el.className = 'exp-card locked';
+      el.onclick   = null;
+      const overlay = document.getElementById('overlay-' + id);
+      if(overlay) overlay.style.display = 'none';
+      const lockedTag = document.getElementById('locked-' + id);
+      if(lockedTag){
+        lockedTag.style.display = 'block';
+        lockedTag.innerHTML = `✗ LOCKED<br><span style="color:var(--muted);font-size:8px">${card.sentence}</span>`;
+      }
+    }
+  }
+}
+
+function renderSingleCardTags(el, card, earnedXP, isHalf){
+  // Remove old tags and inject fresh ones
+  el.querySelectorAll('.claimed-tag,.xp-half-tag,.locked-tag,.type-overlay').forEach(n => n.remove());
+  const claimedTag = document.createElement('div');
+  if(isHalf){
+    claimedTag.className   = 'xp-half-tag';
+    claimedTag.style.display = 'block';
+    claimedTag.textContent = `✓ CLAIMED · +${earnedXP} XP (2nd attempt)`;
+  } else {
+    claimedTag.className   = 'claimed-tag';
+    claimedTag.style.display = 'block';
+    claimedTag.textContent = `✓ CLAIMED · +${earnedXP} XP`;
+  }
+  el.appendChild(claimedTag);
+}
+
+function showXPPop(el, xp){
+  const pop = document.createElement('div');
+  pop.className   = 'xp-popup';
+  pop.textContent = '+' + xp + ' XP';
+  if(el){
+    const r = el.getBoundingClientRect();
+    pop.style.left = (r.left + r.width/2 - 40) + 'px';
+    pop.style.top  = (r.top - 10) + 'px';
+  } else {
+    pop.style.left = '50%'; pop.style.top = '40%';
+  }
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 1000);
+}
+
+// ── SOLO RESULTS ──
+function showSoloResults(){
+  clearInterval(timerInterval);
+  $('grammar-float').style.display = 'none';
+
+  const prevPB  = getPB(myName);
+  const isNewPB = myXP > prevPB;
+  if(isNewPB) setPB(myName, myXP);
+  const newPB  = isNewPB ? myXP : prevPB;
+  const diff   = myXP - prevPB;
+
+  $('results-title').textContent       = "TIME'S UP";
+  $('winner-banner').textContent       = myName.toUpperCase() + ' · SOLO RUN';
+  $('multi-result-wrap').style.display = 'none';
+  $('solo-result-wrap').style.display  = 'block';
+
+  $('sr-xp').textContent    = myXP + ' XP';
+  $('sr-count').textContent = mySentences.length;
+  $('sr-pb').textContent    = newPB + ' XP';
+
+  // vs-best logic: prevPB === 0 means no previous run — always positive regardless of score
+  if(prevPB === 0){
+    $('sr-diff').textContent = 'First run!';
+    $('sr-diff').className   = 'src-val green';
+  } else if(isNewPB){
+    $('sr-diff').textContent = '+' + diff + ' XP';
+    $('sr-diff').className   = 'src-val green';
+  } else if(diff === 0){
+    $('sr-diff').textContent = 'Matched your best';
+    $('sr-diff').className   = 'src-val';
+  } else {
+    $('sr-diff').textContent = diff + ' XP';  // diff is negative here
+    $('sr-diff').className   = 'src-val red';
+  }
+
+  if(isNewPB || prevPB === 0){
+    $('solo-result-card').classList.add('pb');
+    $('pb-flash').classList.add('show');
+  }
+
+  $('sentence-grid').innerHTML = mySentences.length
+    ? mySentences.map(s =>
+        `<div class="s-item">
+          <div class="s-name">${myName}</div>
+          <div class="s-text">${s.sentence}</div>
+        </div>`).join('')
+    : '<div class="s-item" style="grid-column:1/-1">No sentences collected.</div>';
+
+  showScreen('screen-results');
+}
+
+// ── MULTIPLAYER RESULTS ──
+function showResults(lb){
+  clearInterval(timerInterval);
+  $('grammar-float').style.display     = 'none';
+  $('results-title').textContent       = 'GAME OVER';
+  $('solo-result-wrap').style.display  = 'none';
+  $('multi-result-wrap').style.display = 'block';
+
+  if(!lb || !lb.length){
+    $('winner-banner').textContent = 'NO DATA';
+    $('podium').innerHTML = '';
+    $('sentence-grid').innerHTML = '';
+    showScreen('screen-results');
+    return;
+  }
+
+  const draw = lb.length > 1 && lb[0].xp === lb[1].xp;
+  $('winner-banner').textContent = draw
+    ? "IT'S A DRAW!"
+    : `🏆 WINNER: ${lb[0].name.toUpperCase()}`;
+
+  $('podium').innerHTML = lb.slice(0,3).map((p, i) =>
+    `<div class="podium-slot ${i===0?'gold':''}">
+      <div class="p-pos">${['1ST','2ND','3RD'][i]}</div>
+      <div class="p-name">${p.name}</div>
+      <div class="p-xp">${p.xp} XP</div>
+    </div>`
+  ).join('');
+
+  const allS = lb.flatMap(p =>
+    p.sentences.map(s => ({ name: p.name, sentence: s.sentence || s }))
+  );
+  $('sentence-grid').innerHTML = allS.length
+    ? allS.map(s =>
+        `<div class="s-item">
+          <div class="s-name">${s.name}</div>
+          <div class="s-text">${s.sentence}</div>
+        </div>`).join('')
+    : '<div class="s-item" style="grid-column:1/-1">No sentences collected.</div>';
+
+  showScreen('screen-results');
+}
+</script>
+</body>
+</html>
